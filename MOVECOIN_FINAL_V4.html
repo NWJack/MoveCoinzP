@@ -1,0 +1,2296 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>⚡ MOVECOIN</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+input,textarea{user-select:text;-webkit-user-select:text}
+body{background:#07070f;font-family:'Segoe UI',system-ui,sans-serif;color:#e2e8f0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:auto;touch-action:manipulation}
+#root{min-height:100vh;width:100%;display:flex;align-items:flex-start;justify-content:center;overflow:visible}
+canvas{display:block;border-radius:12px;box-shadow:0 0 40px rgba(0,255,180,.15)}
+.ui-overlay{position:fixed;inset:0;pointer-events:none;z-index:10}
+.hud{position:absolute;top:14px;left:14px;right:14px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.hud-box{background:rgba(10,12,28,.88);border:1px solid rgba(0,255,180,.3);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:600}
+.hud-box span{color:#00ffb4}.hud-box .timer{color:#fbbf24}
+.menu{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:rgba(5,6,16,.95);pointer-events:auto;z-index:20;overflow-y:auto;overflow-x:hidden;padding:22px 14px 80px;justify-content:flex-start}
+.menu h1{font-size:clamp(1.7rem,5vw,3rem);background:linear-gradient(135deg,#00ffb4,#7b6cff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+.menu p{color:#94a3b8;margin-bottom:10px;font-size:13px;text-align:center;max-width:420px;line-height:1.45}
+.btn{background:linear-gradient(135deg,#00c98a,#00ffb4);color:#07070f;border:none;padding:10px 26px;border-radius:999px;font-size:14px;font-weight:700;cursor:pointer;margin:4px;box-shadow:0 4px 18px rgba(0,255,180,.3);transition:transform .12s}
+.btn:hover{transform:scale(1.05)}
+.btn.secondary{background:transparent;border:2px solid #00ffb4;color:#00ffb4;box-shadow:none}
+.btn.download{background:linear-gradient(135deg,#7b6cff,#a78bfa);color:#fff;box-shadow:0 4px 18px rgba(123,108,255,.3)}
+.btn.secret{background:linear-gradient(135deg,#67e8f9,#a5f3fc);color:#0c4a6e}
+.controls-hint{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(10,12,28,.85);border:1px solid rgba(0,255,180,.2);border-radius:8px;padding:6px 12px;font-size:11px;color:#94a3b8;white-space:nowrap}
+.mobile-controls{position:absolute;bottom:20px;left:0;right:0;display:none;justify-content:space-between;padding:0 18px;pointer-events:auto;z-index:15}
+.mc-btn{width:58px;height:58px;border-radius:50%;background:rgba(0,255,180,.15);border:2px solid rgba(0,255,180,.4);color:#00ffb4;font-size:22px;display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none}
+.mc-btn:active{background:rgba(0,255,180,.35)}
+.mc-group{display:flex;gap:10px}
+@media(max-width:768px),(pointer:coarse){.mobile-controls{display:flex}.controls-hint{display:none}}
+.level-badge{font-size:10px;color:#7b6cff;letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.panel{background:rgba(10,12,28,.95);border:1px solid rgba(0,255,180,.25);border-radius:12px;padding:12px;width:min(440px,96vw);margin-top:8px}
+.panel h3{color:#00ffb4;font-size:12px;margin-bottom:6px;letter-spacing:1px}
+.panel-tabs{display:flex;gap:5px;margin-bottom:6px}
+.panel-tabs button{flex:1;background:#12122a;border:1px solid rgba(0,255,180,.2);color:#94a3b8;border-radius:6px;padding:5px;font-size:11px;cursor:pointer}
+.panel-tabs button.active{border-color:#00ffb4;color:#00ffb4}
+.bab-messages,.lb-list{max-height:130px;overflow-y:auto;font-size:12px}
+.bab-msg,.lb-row{padding:4px 5px;border-bottom:1px solid rgba(255,255,255,.05)}
+.bab-msg .author,.lb-row .rank{color:#7b6cff;font-weight:600}
+.bab-msg .time{color:#64748b;font-size:10px;margin-left:4px}
+.bab-form{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.bab-form input{flex:1;min-width:60px;background:#12122a;border:1px solid rgba(0,255,180,.3);border-radius:6px;padding:6px 8px;color:#e2e8f0;font-size:12px;outline:none}
+.bab-form button{background:#00c98a;color:#07070f;border:none;border-radius:6px;padding:6px 10px;font-weight:700;cursor:pointer;font-size:12px}
+.ws-row{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+.ws-row input{flex:1;min-width:120px;background:#12122a;border:1px solid rgba(123,108,255,.4);border-radius:6px;padding:6px 8px;color:#e2e8f0;font-size:11px}
+.ws-status{font-size:11px;margin-top:4px}
+.ws-on{color:#00ffb4}.ws-off{color:#f87171}
+.hint-s{color:#67e8f9;font-size:11px}
+.rules-card{width:min(920px,96vw);margin:8px auto 10px;padding:14px 16px;background:linear-gradient(145deg,rgba(13,18,38,.97),rgba(18,10,38,.94));border:1px solid rgba(103,232,249,.28);border-radius:16px;box-shadow:0 10px 35px rgba(0,0,0,.28)}
+.rules-card h2{font-size:15px;color:#fff;margin-bottom:8px;letter-spacing:.4px}.rules-card p{margin:5px 0;color:#b8c4d8;font-size:11px;max-width:none}.rules-card strong{color:#67e8f9}
+.menu-top-grid{width:min(920px,96vw);display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px auto}
+.widget-card{background:rgba(10,12,28,.92);border:1px solid rgba(0,255,180,.22);border-radius:14px;padding:11px;min-height:150px}
+.widget-title{font-size:12px;color:#00ffb4;font-weight:800;margin-bottom:7px;letter-spacing:.6px}.weather-main{display:flex;justify-content:space-between;gap:8px;align-items:center}.weather-temp{font-size:28px;font-weight:800;color:#fff}.weather-advice{font-size:11px;color:#b8c4d8;line-height:1.45;margin-top:7px}.ttt-board{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;width:132px;margin:4px auto}.ttt-cell{height:40px;background:#12122a;border:1px solid rgba(123,108,255,.35);border-radius:7px;color:#fff;font-size:22px;font-weight:800;cursor:pointer}.ttt-status{text-align:center;font-size:10px;color:#94a3b8;margin:5px 0}
+.secret-logo{cursor:pointer;user-select:none;position:relative;padding:4px 10px;border-radius:14px}.secret-logo:active{transform:none}.tap-counter{display:none!important}
+.secret-panel{width:min(920px,96vw);background:rgba(6,8,20,.98);border:1px solid rgba(103,232,249,.35);border-radius:18px;padding:16px;box-shadow:0 0 50px rgba(103,232,249,.13);margin:8px auto}
+.secret-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.secret-action{background:#10152c;border:1px solid rgba(103,232,249,.25);color:#dffaff;border-radius:10px;padding:9px;cursor:pointer;font-weight:700;font-size:11px}
+.secret-action:hover{border-color:#67e8f9;transform:translateY(-1px)}
+.money-rain{position:fixed;inset:0;z-index:9999;pointer-events:none;overflow:hidden}.money-bill{position:absolute;top:-70px;width:82px;height:38px;border-radius:5px;background:linear-gradient(135deg,#b9ffcf,#35c76f);border:2px solid #1b7a43;color:#075b2b;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.35);animation:billFall 8s linear forwards}.money-bill:nth-child(odd){transform:rotate(12deg)}@keyframes billFall{to{top:110vh;transform:translateX(90px) rotate(380deg)}} 
+@media(max-width:700px){.menu-top-grid{grid-template-columns:1fr}.secret-grid{grid-template-columns:1fr}.rules-card{max-height:210px;overflow:auto}}
+
+
+.lounge-chat{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);display:flex;gap:6px;pointer-events:auto;z-index:16;width:min(420px,90vw)}
+.lounge-chat input{flex:1;background:rgba(10,12,28,.9);border:1px solid rgba(0,255,180,.35);border-radius:8px;padding:8px 12px;color:#e2e8f0;font-size:13px;outline:none}
+.lounge-chat button{background:#00c98a;color:#07070f;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer}
+.lounge-badge{position:absolute;top:14px;left:50%;transform:translateX(-50%);background:rgba(10,12,28,.9);border:1px solid rgba(103,232,249,.4);border-radius:999px;padding:6px 16px;font-size:12px;color:#67e8f9;pointer-events:none;z-index:12}
+
+
+#spectral-bg{position:fixed;inset:0;z-index:-5;overflow:hidden;pointer-events:none;background:
+radial-gradient(circle at 50% 50%,rgba(25,20,70,.28),transparent 55%),#05060d}
+.specter{position:absolute;width:180px;height:180px;border-radius:50%;
+background:radial-gradient(circle,rgba(103,232,249,.28) 0%,rgba(123,108,255,.15) 35%,transparent 72%);
+filter:blur(10px);mix-blend-mode:screen;animation:specterFloat 18s ease-in-out infinite alternate}
+.specter.s2{width:240px;height:240px;background:radial-gradient(circle,rgba(0,255,180,.18),rgba(255,45,120,.10) 42%,transparent 72%);animation-duration:24s}
+.specter.s3{width:130px;height:260px;background:radial-gradient(ellipse,rgba(167,139,250,.18),transparent 70%);animation-duration:20s}
+.specter.s4{width:300px;height:120px;background:radial-gradient(ellipse,rgba(103,232,249,.12),transparent 70%);animation-duration:27s}
+@keyframes specterFloat{0%{transform:translate3d(-8vw,8vh,0) scale(.8);opacity:.35}
+35%{transform:translate3d(28vw,-4vh,0) scale(1.15);opacity:.65}
+70%{transform:translate3d(62vw,35vh,0) scale(.9);opacity:.42}
+100%{transform:translate3d(92vw,4vh,0) scale(1.25);opacity:.6}}
+
+/* V3 — responsive readability and stable game viewport */
+html,body,#root{width:100%;min-height:100%;margin:0}
+body{overflow-x:hidden;overflow-y:auto}
+*{box-sizing:border-box}
+button,input{font:inherit}
+.game-shell{width:100%;max-width:1100px;margin:0 auto}
+.menu,.panel,.secret-panel,.rules-card,.widget-card{max-width:100%}
+.menu{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right));}
+@media (max-width:700px){
+  .menu{padding-top:14px;padding-bottom:90px}
+  .menu h1{font-size:28px!important}
+  .menu p{line-height:1.45}
+  .panel{width:100%!important}
+  canvas{max-width:100%;height:auto!important}
+  .rules-card{max-height:none!important}
+}
+.level-hud{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:1000;
+  max-width:calc(100vw - 20px);white-space:normal;text-align:center;
+  padding:6px 10px;border-radius:12px;background:rgba(5,7,18,.88);
+  border:1px solid rgba(103,232,249,.25);font-size:11px}
+.avatar-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px;max-height:220px;overflow-y:auto;overflow-x:hidden;padding-right:4px;-webkit-overflow-scrolling:touch}
+.avatar-choice{min-height:76px;border-radius:12px;border:1px solid rgba(103,232,249,.2);
+ background:#0c1022;color:#fff;cursor:pointer;font-size:28px}
+.avatar-choice span{display:block;font-size:9px;color:#aebbd0;margin-top:3px}
+.avatar-choice.selected{border-color:#00ffb4;box-shadow:0 0 16px rgba(0,255,180,.2)}
+@media(max-width:520px){.avatar-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:280px}}
+.basketball-widget{margin-top:10px}
+.basketball-court{position:relative;height:170px;border-radius:14px;overflow:hidden;
+ background:linear-gradient(#0c1730,#09101e);border:1px solid rgba(255,190,0,.22)}
+.hoop{position:absolute;top:28px;width:54px;height:54px;border:4px solid #ffbe00;border-radius:50%;
+ box-shadow:0 0 12px rgba(255,190,0,.25)}
+.hoop.left{left:9%}.hoop.right{right:9%}
+.hoop:after{content:'';position:absolute;left:9px;right:9px;top:44px;height:42px;border:1px dashed rgba(255,255,255,.45);border-top:0}
+.ball{position:absolute;width:22px;height:22px;border-radius:50%;background:#ff8a00;border:2px solid #5b2d00;
+ transition:transform 1.2s cubic-bezier(.2,.7,.2,1);z-index:3}
+.ball.shoot-left{transform:translate(310px,-5px) rotate(720deg)}
+.ball.shoot-right{transform:translate(-310px,-5px) rotate(720deg)}
+.basket-controls{display:flex;justify-content:center;gap:7px;margin-top:7px;flex-wrap:wrap}
+
+/* Keep the jukebox compact in the lounge */
+.lounge-jukebox,.jukebox,.jbox,.jukebox-card{max-height:110px!important;overflow:auto!important}
+.lounge-jukebox h1,.lounge-jukebox h2,.jukebox h1,.jukebox h2{font-size:12px!important;margin:3px 0!important}
+
+.coin-field{position:relative;height:95px;margin:8px auto;width:min(900px,94vw);overflow:hidden;border-radius:14px;
+background:linear-gradient(#0c1525 0 64%,#132c1b 64%);border:1px solid rgba(0,255,180,.18)}
+.coin-ground{position:absolute;left:0;right:0;bottom:0;height:35%;background:repeating-linear-gradient(135deg,#17351e 0 12px,#1d4425 12px 24px)}
+.coin-item{position:absolute;width:22px;height:22px;border-radius:50%;background:#ffbe00;color:#4a2d00;
+display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;box-shadow:0 0 12px rgba(255,190,0,.5)}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<script type="text/babel">
+const {useEffect,useRef,useState,useCallback}=React;
+
+const storage={
+  get(k,d){try{const v=localStorage.getItem(k);return v!=null?JSON.parse(v):d}catch{return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}
+};
+
+/* ── Web Audio SFX ── */
+const AudioFX=(()=>{
+  let ctx=null;
+  const ens=()=>{if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==='suspended')ctx.resume();return ctx};
+  function tone(freq,dur,type='square',vol=.08,slide=0){
+    try{const c=ens(),o=c.createOscillator(),g=c.createGain();
+      o.type=type;o.frequency.setValueAtTime(freq,c.currentTime);
+      if(slide)o.frequency.linearRampToValueAtTime(freq+slide,c.currentTime+dur);
+      g.gain.setValueAtTime(vol,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+dur);
+      o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+dur)}catch{}
+  }
+  return{
+    jump:()=>tone(280,.08,'square',.07,120),
+    doubleJump:()=>{tone(360,.09,'square',.07,180);tone(480,.06,'triangle',.05)},
+    coin:()=>{tone(880,.07,'square',.06);setTimeout(()=>tone(1175,.1,'square',.05),50)},
+    ultimate:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.12,'sine',.08),i*80))},
+    hurt:()=>tone(180,.15,'sawtooth',.08,-80),
+    win:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>tone(f,.18,'sine',.07),i*120))},
+    spring:()=>tone(200,.12,'triangle',.07,300),
+    stomp:()=>tone(150,.1,'square',.08,-50),
+    trophy:()=>{tone(660,.15,'sine',.09);setTimeout(()=>tone(880,.2,'sine',.08),100);setTimeout(()=>tone(1320,.3,'sine',.07),220)}
+  };
+})();
+
+const W=960,H=540,TILE=32;
+const GRAVITY=.50,FRICTION=.84,MOVE_SPEED=.72,JUMP_FORCE=-12.2,MAX_FALL=13;
+const COIN_VALUE=10,ULTIMATE_VALUE=100;
+
+/*
+  Map: # solid  3 spike  4 coin  5 flag  6 spring  7 enemy
+  8 ultimate  9 spawn  M mover  C crusher  F faller  T trophy
+  Level 0: long LEFT corridor — trophy far off-screen until you walk back
+*/
+const LEVELS=[
+{name:"Découverte",map:[
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"..............................................4.......4.................8.............................................",
+"............................................####....####..............................................................",
+"......................................................................................................................",
+"......................................4...........4...........4...............4.......................................",
+"....................................####........####........####............####......................................",
+"......................................................................................................................",
+"T...............................9...................4....................4...............4.......................5....",
+"######################################################################################################################",
+"######################################################################################################################",
+"######################################################################################################################",
+]},
+{name:"Sauts Précis",map:[
+"................................................................................................",
+"................................................................................................",
+"................................................................................................",
+"................................................................................................",
+"................................................................................................",
+"..............................4.................................................................",
+"............................####................................................................",
+"..................4...................M.........................................................",
+"................####............................................................................",
+"........4...................4...............4...................................................",
+"......####................####............####..............4...................................",
+"..................................................F.......................####..................",
+"................................................4.................8.............................",
+"9...............4...........4.............####..........4...............4..............5........",
+"######........####........####........................####............####..........############",
+"######........####........####........................####............####..........############",
+"######33333333####33333333####333333333333333333333333####333333333333####3333333333############",
+]},
+{name:"Dangers",map:[
+"................................................................................................",
+"................................................................................................",
+"................................................................................................",
+"................................................................................................",
+"..............................................4.................................................",
+"............................................####................................................",
+"........................4.......................................................................",
+"......................####..............6...............C.......................................",
+"......................................####......................................................",
+"........4.......7...........4.....................7.........4...................................",
+"......####....####........####..................####......####..................................",
+"..........................................M.................................4...................",
+"..........................................................................####........8.........",
+"9.....4...........6.........4.......7.........4.........6.........4...................5.........",
+"######..........####......####....####......####......####......####..............##############",
+"######..........####......####....####......####......####......####..............##############",
+"######3333333333####333333####3333####333333####333333####333333####33333333333333##############",
+]},
+{name:"Ascension",map:[
+"................................................................................................",
+"..............................................................4.................5...............",
+"............................................................####..............####..............",
+"................................................4...............................................",
+"..............................................####..........C...................................",
+"..................................4.............................................................",
+"................................####................4...........................................",
+"......................4...........................####..........................................",
+"....................####..............4.........................................................",
+"..........4.......................6.####..............M.........................................",
+"........####....................####............................................................",
+"..............4.......4.............................................8...........................",
+"............####....####........................................................................",
+"9.....4...........6.............................................................................",
+"######..........####............................................................................",
+"######..........####............................................................................",
+"######3333333333####33333333333333333333333333333333333333333333333333333333333333333333333333333",
+]},
+{name:"Finale",map:[
+"................................................................................................",
+"................................................................................................",
+"................................................................................................",
+"................................4...........4...........4.......................................",
+"..............................####........####........####......................................",
+"..................4.....................................................4.......................",
+"................####..........................C.......................####......................",
+"........4.................7.........4.........7.........4.........7.............................",
+"......####..............####......####......####......####......####............................",
+"............................................................6...................................",
+"..........................................M...............####..................................",
+"................4...........4...........4...........4.........................8.................",
+"..............####........####........####........####..........................................",
+"9...4...6.........7...4.........7...4.........7.........4...6...4...................5...........",
+"####..####......####..####......####..####......####......####..####..............##############",
+"####..####......####..####......####..####......####......####..####..............##############",
+"####33####333333####33####333333####33####333333####333333####33####33333333333333##############",
+]},
+{name:"Oasis des Nomades",secret:true,oasis:true,map:[
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"......................................................................................................................",
+"9.....................................................................................................................",
+"######################################################################################################################",
+"######################################################################################################################",
+"######################################################################################################################",
+]}
+];
+
+function parseLevel(ld){
+  const map=ld.map,tiles=[],coins=[],spikes=[],springs=[],enemies=[],flags=[],ultimates=[];
+  const movers=[],crushers=[],fallers=[],trophies=[],npcs=[],builds=[];
+  let spawn={x:2*TILE,y:10*TILE};
+  for(let r=0;r<map.length;r++){
+    for(let c=0;c<map[r].length;c++){
+      const ch=map[r][c],x=c*TILE,y=r*TILE;
+      if(ch==='#')tiles.push({x,y,w:TILE,h:TILE});
+      else if(ch==='3')spikes.push({x,y:y+TILE-10,w:TILE,h:10});
+      else if(ch==='4')coins.push({x:x+8,y:y+8,w:16,h:16,collected:false,anim:Math.random()*6.28});
+      else if(ch==='5')flags.push({x,y,w:TILE,h:TILE*2});
+      else if(ch==='6')springs.push({x,y:y+TILE-12,w:TILE,h:12});
+      else if(ch==='7')enemies.push({x,y,w:28,h:28,vx:1.2,dir:1,alive:true});
+      else if(ch==='8')ultimates.push({x:x+4,y:y+4,w:24,h:24,collected:false,anim:Math.random()*6.28});
+      else if(ch==='9')spawn={x,y};
+      else if(ch==='M')movers.push({x,y,w:TILE*2,h:12,ox:x,range:TILE*3,speed:1.2,dir:1});
+      else if(ch==='C')crushers.push({x,y:y-TILE*2,w:TILE,h:TILE,oy:y-TILE*2,range:TILE*3,speed:1.5,dir:1,wait:0});
+      else if(ch==='F')fallers.push({x,y,w:TILE*2,h:12,state:'idle',timer:0,vy:0});
+      else if(ch==='T')trophies.push({x,y:y-8,w:28,h:36,collected:false,anim:0});
+    }
+  }
+  if(ld.oasis){
+    const roster=[
+      {name:'Amina',sex:'F',color:'#f59e0b',role:'architecte',element:'terre',leader:true,phrases:['Je trace un plan.','Code : construire.','Ordre aux autres.','Apprenez avec moi.']},
+      {name:'Karim',sex:'M',color:'#10b981',role:'jardinier',element:'eau',phrases:['J’irrigue.','L’eau nourrit.','Mare nouvelle.','Oxygène + plantes.']},
+      {name:'Leila',sex:'F',color:'#3b82f6',role:'ingénieure',element:'vent',phrases:['Vent dans les voiles.','Pompe à oxygène.','Atelier prêt.','Code élémental.']},
+      {name:'Youssef',sex:'M',color:'#ec4899',role:'marchand',element:'feu',phrases:['Feu du marché.','Ressources échangées.','Couple installé.','Stock atelier.']},
+      {name:'Soraya',sex:'F',color:'#8b5cf6',role:'artiste',element:'eau',phrases:['Atmosphère peinte.','Fontaine d’eau.','Beauté utile.','Lien M/F.']},
+      {name:'Nabil',sex:'M',color:'#14b8a6',role:'éclaireur',element:'vent',phrases:['Frontière +1.','Air libre.','Carte étendue.','Nouvel horizon.']},
+      {name:'Zahra',sex:'F',color:'#f97316',role:'gardienne',element:'feu',phrases:['Feu de camp.','Zone stable.','Couple protégé.','Évolution sure.']},
+      {name:'Omar',sex:'M',color:'#06b6d4',role:'inventeur',element:'terre',phrases:['Invention !','Oxygène synth.','Labo +1.','Civilisation +logic.']},
+      {name:'Inès',sex:'F',color:'#f472b6',role:'médecine',element:'eau',phrases:['Soin de l’eau.','Reproduction stable.','Santé du village.','Nouveau-né bientôt.']},
+      {name:'Rayan',sex:'M',color:'#a3e635',role:'fermier',element:'terre',phrases:['Récolte terre.','Nourriture +1.','Couple fermier.','Atelier graines.']},
+      {name:'Hoo',sex:'M',color:'#fde047',role:'hype',element:'feu',phrases:['Hoo yeaa !','Hoo yeaa, on avance !','Hoo yeaa, boutique !','Hoo yeaa !']}
+    ];
+    for(let i=0;i<roster.length;i++){
+      const r=roster[i];
+      const depth=0.4+Math.random()*0.55;
+      const plotX=100+i*140; // terrain personnel
+      npcs.push({
+        id:i,name:r.name,sex:r.sex,color:r.color,role:r.role,element:r.element,leader:!!r.leader,
+        x:plotX+40,y:13*TILE-28,
+        w:22,h:26,vx:0,vy:0,facing:1,
+        state:'walk',timer:15+Math.random()*50,targetX:null,
+        bubble:'',bubbleUntil:0,phrases:r.phrases,
+        buildCooldown:40+Math.random()*80,inventories:0,mood:1,partner:null,age:1,logic:1,
+        lang:1,creativity:1,voiceOn:true,depth,task:null,lastLine:'',
+        plotX,plotW:130,hasHouse:false,hasGarage:false,hasYard:false,tradeOffer:null
+      });
+    }
+    const gy=13*TILE-26;
+    builds.push(
+      {x:260,y:gy,kind:'palm',life:9999,owner:'Village'},
+      {x:340,y:gy,kind:'well',life:9999,owner:'Village'},
+      {x:440,y:gy,kind:'garden',life:9999,owner:'Village'},
+      {x:640,y:gy,kind:'lamp',life:9999,owner:'Village'},
+      {x:740,y:gy,kind:'fountain',life:9999,owner:'Village'},
+      {x:900,y:gy,kind:'workshop',life:9999,owner:'Atelier'},
+      {x:1000,y:gy,kind:'lab',life:9999,owner:'Atelier'},
+      {x:500,y:gy,kind:'stack_gold',life:9999,owner:'Marché'},
+      {x:560,y:gy,kind:'stack_ore',life:9999,owner:'Marché'},
+      {x:620,y:gy,kind:'stack_diamond',life:9999,owner:'Marché'}
+    );
+  }
+  return{tiles,coins,spikes,springs,enemies,flags,ultimates,movers,crushers,fallers,trophies,npcs,builds,
+    spawn,name:ld.name,rows:map.length,cols:map[0].length,secret:!!ld.secret,oasis:!!ld.oasis};
+}
+function aabb(a,b){return a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y}
+
+const TRACKS=[
+  {artist:'Oasis Ensemble',title:'Harpe des dunes',bpm:72,key:'C',vibe:'harp',url:null},
+  {artist:'Oasis Ensemble',title:'Violon du vent',bpm:80,key:'Em',vibe:'violin',url:null},
+  {artist:'Oasis Ensemble',title:'Tambours de terre',bpm:100,key:'Gm',vibe:'drum',url:null},
+  {artist:'Oasis Ensemble',title:'Guitare du feu',bpm:96,key:'Am',vibe:'guitar',url:null},
+];
+/* Apprentissage français / chiffres / dialogues (écosystème) */
+const FR_ALPHA='abcdefghijklmnopqrstuvwxyz'.split('');
+const FR_NUMS=['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix'];
+const FR_DIALOGS=[
+  {a:'Allô ?',b:'Allô oui, ça va bien merci.'},
+  {a:'Ça va bien aujourd’hui ?',b:'Oui, plutôt bien. On avance sur le marché.'},
+  {a:'Tu as mangé ?',b:'Pas encore. Il reste du pain à l’usine.'},
+  {a:'Pourquoi on apprend les lettres ?',b:'Pour lire les enseignes et écrire nos idées.'},
+  {a:'C’est quoi cinq plus trois ?',b:'Cinq plus trois, ça fait huit.'},
+  {a:'On ouvre une boutique ?',b:'Oui, avec des pièces et des étals propres.'},
+  {a:'Tu viens m’aider au fond ?',b:'J’arrive. Je prends les planches.'},
+  {a:'Il fait chaud non ?',b:'L’atmosphère monte. Restons à l’ombre.'},
+  {a:'Tu as vu la neige ?',b:'Oui, l’air est froid ce cycle-ci.'},
+  {a:'On travaille ensemble ?',b:'Oui : d’abord chacun sa tâche, puis on assemble.'},
+  {a:'Merci pour ta patience.',b:'De rien. On apprend mieux à deux.'},
+  {a:'Hoo yeaa ?',b:'Hoo yeaa ! On continue.'},
+  {a:'Où sont les pièces du magasin ?',b:'Dans la caisse, près de l’usine.'},
+  {a:'Qui s’occupe de la nourriture ?',b:'Le fermier prépare, le marchand distribue.'},
+];
+const FR_LYRICS=[
+  'Au clair de la lune, mon ami Pierrot',
+  'Sur le pont d’Avignon, l’on y danse tous en rond',
+  'Meunier tu dors, ton moulin va trop vite',
+  'Il pleut bergère, rentre tes blancs moutons',
+  'Compère Guilleri, te lairas-tu mourir',
+];
+const FR_LESSONS=[
+  'La lettre M comme magasin',
+  'La lettre U comme usine',
+  'Dix moins deux égale huit',
+  'Une question attend toujours une réponse',
+  'On écrit pour se comprendre',
+];
+const NPC_TASKS=['livrer','balayer','inventaire','cuisiner','vendre','réparer','planter','surveiller'];
+function pickDialog(used){
+  const pool=FR_DIALOGS.filter(d=>!used||!used.has(d.a));
+  const d=(pool.length?pool:FR_DIALOGS)[Math.floor(Math.random()* (pool.length||FR_DIALOGS.length))];
+  return d;
+}
+
+function App(){
+  const canvasRef=useRef(null);
+  const [screen,setScreen]=useState('menu');
+  const [levelIdx,setLevelIdx]=useState(0);
+  const [score,setScore]=useState(0);
+  const [lives,setLives]=useState(3);
+  const [highScore,setHighScore]=useState(()=>storage.get('mc_hs',0));
+  const [unlocked,setUnlocked]=useState(()=>storage.get('mc_unl',1));
+  const [secretUnlocked,setSecretUnlocked]=useState(()=>storage.get('mc_secret',false));
+  const [babMsgs,setBabMsgs]=useState(()=>storage.get('mc_bab',[{author:'Système',text:'Bienvenue sur MOVECOIN !',time:Date.now()}]));
+  const [leaderboard,setLeaderboard]=useState(()=>storage.get('mc_lb',{}));
+  const [playerName,setPlayerName]=useState(()=>storage.get('mc_name',''));
+  const [playerPass,setPlayerPass]=useState('');
+  const [supportTickets,setSupportTickets]=useState(()=>storage.get('mc_support_tickets',[]));
+  const [oasisResources,setOasisResources]=useState(()=>storage.get('mc_oasis_res',{eau:10,terre:10,feu:5,vent:5,oxygene:20,atmosphere:10}));
+  const [babText,setBabText]=useState('');
+  const [panelTab,setPanelTab]=useState('bab');
+  const [wsStatus,setWsStatus]=useState('off');
+  const [wsUrl,setWsUrl]=useState(()=>{
+    const saved=storage.get('mc_ws',null);
+    if(saved) return saved;
+    const loc=window.location;
+    if(loc.protocol==='http:'||loc.protocol==='https:'){
+      const proto=loc.protocol==='https:'?'wss:':'ws:';
+      if(loc.hostname!=='localhost'&&loc.hostname!=='127.0.0.1') return proto+'//'+loc.host;
+    }
+    return 'ws://localhost:8765';
+  });
+  const [timerDisplay,setTimerDisplay]=useState('0.0');
+  const [loungeCount,setLoungeCount]=useState(0);
+  const [loungeChat,setLoungeChat]=useState('');
+  const [myLoungeId,setMyLoungeId]=useState(null);
+  const myLoungeIdRef=useRef(null);
+  const loungeOthersRef=useRef(new Map()); // id -> player
+  const loungeMeRef=useRef(null);
+  const [rulesOpen,setRulesOpen]=useState(true);
+  const [secretMode,setSecretMode]=useState(false);
+  const [secretCode,setSecretCode]=useState('');
+  const [logoTaps,setLogoTaps]=useState(0);
+  const AVATARS=[
+    {id:'ghost',icon:'👻',name:'Spectre',color:'#e2e8f0',accent:'#94a3b8',body:'soft'},
+    {id:'robot',icon:'🤖',name:'Robot',color:'#94a3b8',accent:'#64748b',body:'metal'},
+    {id:'ninja',icon:'🥷',name:'Ninja',color:'#1e293b',accent:'#334155',body:'stealth'},
+    {id:'alien',icon:'👽',name:'Alien',color:'#4ade80',accent:'#22c55e',body:'glow'},
+    {id:'cat',icon:'🐱',name:'Chat',color:'#f59e0b',accent:'#d97706',body:'fur'},
+    {id:'skull',icon:'💀',name:'Crâne',color:'#f8fafc',accent:'#cbd5e1',body:'bone'},
+    {id:'wizard',icon:'🧙',name:'Mage',color:'#8b5cf6',accent:'#7c3aed',body:'magic'},
+    {id:'astronaut',icon:'👨‍🚀',name:'Cosmonaute',color:'#38bdf8',accent:'#0ea5e9',body:'suit'}
+  ];
+  const [avatar,setAvatar]=useState(()=>storage.get('mc_avatar','ghost'));
+  const [avatarOpen,setAvatarOpen]=useState(true);
+  const [balls,setBalls]=useState(()=>[0,1]);
+  const [ballShot,setBallShot]=useState({});
+  const [oasisClock,setOasisClock]=useState(()=>{
+    const d=new Date();
+    return {h:d.getHours(),m:d.getMinutes(),s:d.getSeconds(),dow:d.getDay(),doy:Math.floor((d-new Date(d.getFullYear(),0,0))/86400000),year:d.getFullYear()};
+  });
+
+  const [moneyRain,setMoneyRain]=useState(false);
+  const [ttt,setTtt]=useState(()=>storage.get('mc_ttt',{board:Array(9).fill(''),turn:'X',status:'Votre tour — X'}));
+  const tttChannelRef=useRef(null);
+  const avatarRef=useRef(avatar);
+  useEffect(()=>{avatarRef.current=avatar},[avatar]);
+  const [accounts,setAccounts]=useState(()=>storage.get('mc_accounts',[]));
+  const [accountMsg,setAccountMsg]=useState('');
+  const [loggedIn,setLoggedIn]=useState(()=>!!storage.get('mc_session',null));
+  const [vipRank,setVipRank]=useState(()=>{
+    const s=storage.get('mc_session',null);return s?.vip||0;
+  });
+  const [accountPoints,setAccountPoints]=useState(()=>{
+    const s=storage.get('mc_session',null);return s?.points||0;
+  });
+  const [godInv,setGodInv]=useState(()=>storage.get('mc_god_inv',{food:30,coins:50,wood:20,metal:10,cloth:10,gadgets:5,gold:5,diamond:2,ore:8}));
+  const [tradeOpen,setTradeOpen]=useState(false);
+  const [tradeMsg,setTradeMsg]=useState('');
+  const [oasisChat,setOasisChat]=useState('');
+  const [oasisLog,setOasisLog]=useState(()=>storage.get('mc_oasis_log',[{t:Date.now(),who:'Univers',text:'Monde parallèle initialisé.'}]));
+  const dialogUsedRef=useRef(new Set());
+  const [aiOpen,setAiOpen]=useState(false);
+  const [aiInput,setAiInput]=useState('');
+  const [aiLog,setAiLog]=useState([{role:'ai',text:'Assistant MOVECOIN prêt. Pose une question sur le jeu, l’oasis ou les comptes.'}]);
+  const [secretAiInput,setSecretAiInput]=useState('');
+  const [secretAiLog,setSecretAiLog]=useState([{role:'ai',text:'Mode Créateur · Grok intégré. Commandes : ressources +, logic +, save oasis, clear tickets, unlock oasis, status.'}]);
+
+
+  const stateRef=useRef(null);
+  const keysRef=useRef({});
+  const touchRef=useRef({left:false,right:false,jump:false,jumpEdge:false,dash:false});
+  const jumpBuf=useRef(false);
+  const animRef=useRef(null);
+  const wsRef=useRef(null);
+  const wsRetry=useRef(null);
+
+  /* ── WebSocket (localhost OU URL internet) ── */
+  const connectWS=useCallback((url)=>{
+    if(wsRef.current){try{wsRef.current.close()}catch{}}
+    clearTimeout(wsRetry.current);
+    if(!url){setWsStatus('off');return}
+    try{
+      const ws=new WebSocket(url);
+      wsRef.current=ws;
+      ws.onopen=()=>setWsStatus('on');
+      ws.onclose=()=>{setWsStatus('off');wsRetry.current=setTimeout(()=>connectWS(url),4000)};
+      ws.onerror=()=>{try{ws.close()}catch{}};
+      ws.onmessage=(ev)=>{
+        try{
+          const m=JSON.parse(ev.data);
+          if(m.type==='init'){
+            if(m.babillard)setBabMsgs(m.babillard);
+            if(m.leaderboard){setLeaderboard(m.leaderboard);storage.set('mc_lb',m.leaderboard)}
+          }
+          if(m.type==='bab')setBabMsgs(p=>[m.entry,...p].slice(0,50));
+          if(m.type==='leaderboard')setLeaderboard(p=>{const n={...p,[m.level]:m.entries};storage.set('mc_lb',n);return n});
+          if(m.type==='lounge_count')setLoungeCount(m.count||0);
+          if(m.type==='init'&&typeof m.loungeCount==='number')setLoungeCount(m.loungeCount);
+          if(m.type==='lounge_you'){setMyLoungeId(m.id);myLoungeIdRef.current=m.id;if(loungeMeRef.current){loungeMeRef.current.id=m.id;loungeMeRef.current.color=m.color;loungeMeRef.current.name=m.name}}
+          if(m.type==='lounge_state'){
+            const map=new Map();
+            (m.players||[]).forEach(pl=>{if(pl.id!==myLoungeIdRef.current)map.set(pl.id,pl)});
+            loungeOthersRef.current=map;
+          }
+          if(m.type==='lounge_move'){
+            const o=loungeOthersRef.current.get(m.id);
+            if(o){o.x=m.x;o.y=m.y;o.facing=m.facing}
+            else if(m.id!==myLoungeIdRef.current)loungeOthersRef.current.set(m.id,{id:m.id,x:m.x,y:m.y,facing:m.facing,name:'?',color:'#94a3b8',bubble:''});
+          }
+          if(m.type==='lounge_chat'){
+            if(m.id===myLoungeIdRef.current&&loungeMeRef.current){loungeMeRef.current.bubble=m.text;loungeMeRef.current.bubbleUntil=Date.now()+6000}
+            const o=loungeOthersRef.current.get(m.id);
+            if(o){o.bubble=m.text;o.bubbleUntil=Date.now()+6000;o.name=m.name||o.name;o.color=m.color||o.color}
+            else if(m.id!==myLoungeIdRef.current)loungeOthersRef.current.set(m.id,{id:m.id,x:100,y:400,facing:1,name:m.name,color:m.color||'#94a3b8',bubble:m.text,bubbleUntil:Date.now()+6000});
+          }
+        }catch{}
+      };
+    }catch{setWsStatus('off');wsRetry.current=setTimeout(()=>connectWS(url),4000)}
+  },[]);
+
+  useEffect(()=>{connectWS(wsUrl);return()=>{clearTimeout(wsRetry.current);if(wsRef.current)wsRef.current.close()}},[wsUrl,connectWS]);
+
+  const wsSend=obj=>{if(wsRef.current&&wsRef.current.readyState===1)wsRef.current.send(JSON.stringify(obj))};
+
+  const initLevel=useCallback((idx,keepS=false,keepL=false)=>{
+    let parsed=parseLevel(LEVELS[idx]);
+    // Oasis : monde persistant qui s'agrandit à chaque visite
+    if(parsed.oasis){
+      const saved=storage.get('mc_oasis_world',null);
+      if(saved&&saved.builds){
+        parsed.builds=saved.builds;
+        parsed.civLogic=saved.civLogic||1;
+        if(saved.npcs&&saved.npcs.length){
+          // restaurer PNJ (positions/âge/logic) + garder structure de base
+          parsed.npcs=saved.npcs.map((sn,i)=>{
+            const base=parsed.npcs[i]||parsed.npcs[0]||{};
+            return {...base,...sn,w:sn.w||22,h:sn.h||26,bubble:'',bubbleUntil:0,
+              plotX:sn.plotX!=null?sn.plotX:(base.plotX||100+i*140),plotW:sn.plotW||130,
+              hasHouse:!!sn.hasHouse,hasGarage:!!sn.hasGarage,hasYard:!!sn.hasYard,depth:sn.depth||0.6};
+          });
+        }
+        // agrandir la carte (colonnes) à chaque retour
+        const grow=Math.min(80,(saved.visits||0)*4+4);
+        parsed.cols=Math.max(parsed.cols, LEVELS[idx].map[0].length + grow);
+        // étendre le sol
+        const gy=13*TILE;
+        for(let c=LEVELS[idx].map[0].length;c<parsed.cols;c++){
+          parsed.tiles.push({x:c*TILE,y:gy,w:TILE,h:TILE});
+          parsed.tiles.push({x:c*TILE,y:gy+TILE,w:TILE,h:TILE});
+          parsed.tiles.push({x:c*TILE,y:gy+TILE*2,w:TILE,h:TILE});
+        }
+        parsed.visits=(saved.visits||0)+1;
+      }else{
+        parsed.civLogic=1;parsed.visits=1;
+      }
+      storage.set('mc_oasis_world',{builds:parsed.builds,npcs:parsed.npcs.map(n=>({id:n.id,name:n.name,sex:n.sex,color:n.color,role:n.role,element:n.element,x:n.x,y:n.y,partner:n.partner,age:n.age,logic:n.logic,inventories:n.inventories})),civLogic:parsed.civLogic,visits:parsed.visits,cols:parsed.cols});
+    }
+    stateRef.current={
+      level:parsed,
+      player:{x:parsed.spawn.x,y:parsed.spawn.y,w:24,h:28,vx:0,vy:0,onGround:false,facing:1,invuln:0,dead:false,won:false,animFrame:0,animTimer:0,jumpsLeft:2,dashCd:0},
+      camera:{x:0,y:0},particles:[],frame:0,time:0,
+      coinsCollected:0,totalCoins:parsed.coins.length,ultimateCollected:false,trophyGot:false
+    };
+    if(!keepS)setScore(0);if(!keepL)setLives(3);
+    setLevelIdx(idx);setTimerDisplay('0.0');
+  },[]);
+
+  useEffect(()=>{
+    const down=e=>{
+      if(!keysRef.current[e.code]&&['ArrowUp','KeyW','Space'].includes(e.code))jumpBuf.current=true;
+      keysRef.current[e.code]=true;
+      if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Space','KeyW','KeyA','KeyS','KeyD'].includes(e.code))e.preventDefault();
+      if(e.code==='Escape'&&screen==='playing')setScreen('pause');
+      else if(e.code==='Escape'&&screen==='pause')setScreen('playing');
+      else if(e.code==='Escape'&&screen==='lounge'){wsSend({type:'lounge_leave'});setMyLoungeId(null);myLoungeIdRef.current=null;setScreen('menu');}
+    };
+    const up=e=>{keysRef.current[e.code]=false};
+    window.addEventListener('keydown',down);window.addEventListener('keyup',up);
+    return()=>{window.removeEventListener('keydown',down);window.removeEventListener('keyup',up)};
+  },[screen]);
+
+  /* ── Game loop ── */
+  useEffect(()=>{
+    if(screen!=='playing')return;
+    const canvas=canvasRef.current;if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+
+    function hurt(s,force=false){
+      const p=s.player;if(p.invuln>0&&!force)return;
+      p.invuln=90;p.vy=-8;p.vx=p.facing*-3;AudioFX.hurt();
+      for(let i=0;i<15;i++)s.particles.push({x:p.x+p.w/2,y:p.y+p.h/2,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,life:35,color:'#ff4466',size:4});
+      setLives(l=>{const nl=l-1;if(nl<=0){p.dead=true;setTimeout(()=>setScreen('gameover'),800)}
+        else setTimeout(()=>{p.x=s.level.spawn.x;p.y=s.level.spawn.y;p.vx=0;p.vy=0;p.invuln=60;p.jumpsLeft=2},400);return nl});
+    }
+
+    function solids(level){
+      const e=[];
+      for(const m of level.movers)e.push({x:m.x,y:m.y,w:m.w,h:m.h});
+      for(const c of level.crushers)e.push({x:c.x,y:c.y,w:c.w,h:c.h});
+      for(const f of level.fallers)if(f.state!=='fallen')e.push({x:f.x,y:f.y,w:f.w,h:f.h});
+      return level.tiles.concat(e);
+    }
+
+    function draw(ctx,s){
+      const{player:p,level,camera,particles,frame}=s;
+      ctx.save();
+      const now=new Date();
+      const hour=now.getHours()+now.getMinutes()/60;
+      if(level.oasis){
+        // Day/night sky from real time
+        const g=ctx.createLinearGradient(0,0,0,H);
+        if(hour>=6&&hour<8){g.addColorStop(0,'#f97316');g.addColorStop(.5,'#fbbf24');g.addColorStop(1,'#0d9488')} // aube
+        else if(hour>=8&&hour<17){g.addColorStop(0,'#38bdf8');g.addColorStop(.55,'#7dd3fc');g.addColorStop(1,'#fef3c7')} // jour
+        else if(hour>=17&&hour<20){g.addColorStop(0,'#c2410c');g.addColorStop(.4,'#ea580c');g.addColorStop(1,'#422006')} // crépuscule
+        else{g.addColorStop(0,'#0f172a');g.addColorStop(.5,'#1e1b4b');g.addColorStop(1,'#312e81')} // nuit
+        ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+        // sun / moon
+        if(hour>=6&&hour<20){
+          const sunX=((hour-6)/14)*W;
+          ctx.fillStyle=hour<17?'#fde047':'#fb923c';
+          ctx.beginPath();ctx.arc(sunX,60+Math.sin((hour-6)/14*Math.PI)*40,22,0,6.28);ctx.fill();
+        }else{
+          ctx.fillStyle='#e2e8f0';ctx.beginPath();ctx.arc(W*0.7,70,16,0,6.28);ctx.fill();
+          ctx.fillStyle=g;ctx.beginPath();ctx.arc(W*0.7-6,66,12,0,6.28);ctx.fill();
+        }
+        // stars at night
+        if(hour<6||hour>=20){
+          ctx.fillStyle='rgba(255,255,255,0.7)';
+          for(let i=0;i<35;i++){const sx=(i*97)%W,sy=(i*53)%180;ctx.beginPath();ctx.arc(sx,sy,1+(i%2),0,6.28);ctx.fill()}
+        }
+      }else{
+        const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a0a1a');g.addColorStop(.5,'#0d1025');g.addColorStop(1,'#111828');
+        ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+      }
+      const decorThemes=[
+        ['#081b2d','#0e7490','🌊'],
+        ['#20120a','#b45309','🏜️'],
+        ['#170b1f','#7e22ce','☠️'],
+        ['#071b16','#047857','🌿'],
+        ['#1b0b12','#be185d','🔥'],
+        ['#3b2a14','#0d9488','🏝️']
+      ];
+      const [dc1,dc2]=decorThemes[levelIdx]||decorThemes[0];
+      if(!level.oasis){
+        const dg=ctx.createLinearGradient(0,0,W,H);dg.addColorStop(0,dc1);dg.addColorStop(1,dc2);
+        ctx.globalAlpha=.30;ctx.fillStyle=dg;ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;
+      }
+      // Décor de niveau : halos, montagnes et particules de profondeur
+      ctx.save();ctx.globalAlpha=.20;
+      for(let i=0;i<9;i++){
+        const bx=i*150+((frame*.15)%(150));
+        ctx.fillStyle=i%2?'#67e8f9':'#a78bfa';
+        ctx.beginPath();ctx.arc(bx,420-(i%3)*28,70+(i%4)*15,Math.PI,Math.PI*2);ctx.fill();
+      }
+      ctx.restore();
+      // Terrain de basket en fond (parallax, pas d’UI)
+      ctx.save();ctx.globalAlpha=level.oasis?0.12:0.08;
+      const bcx=W*0.55-(camera.x*0.15%80),bcy=H*0.42,bcw=220,bch=90;
+      ctx.strokeStyle='#ffbe00';ctx.lineWidth=2;ctx.strokeRect(bcx,bcy,bcw,bch);
+      ctx.beginPath();ctx.arc(bcx+bcw/2,bcy+bch/2,18,0,6.28);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(bcx+bcw/2,bcy);ctx.lineTo(bcx+bcw/2,bcy+bch);ctx.stroke();
+      ctx.beginPath();ctx.arc(bcx+14,bcy+bch/2,10,0,6.28);ctx.stroke();
+      ctx.beginPath();ctx.arc(bcx+bcw-14,bcy+bch/2,10,0,6.28);ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle='rgba(255,255,255,.35)';
+      for(let i=0;i<40;i++){const sx=((i*137+frame*.1)%(W+20))-10-camera.x*.1,sy=(i*97)%H;ctx.beginPath();ctx.arc(sx,sy,1+(i%3)*.5,0,6.28);ctx.fill()}
+      ctx.translate(-Math.floor(camera.x),-Math.floor(camera.y));
+
+      for(const t of level.tiles){ctx.fillStyle='#1a1a3e';ctx.fillRect(t.x,t.y,t.w,t.h);ctx.fillStyle='#2a2a5e';ctx.fillRect(t.x,t.y,t.w,4)}
+      for(const m of level.movers){ctx.fillStyle='#3b82f6';ctx.fillRect(m.x,m.y,m.w,m.h);ctx.fillStyle='#60a5fa';ctx.fillRect(m.x,m.y,m.w,3)}
+      for(const c of level.crushers){ctx.fillStyle='#ef4444';ctx.fillRect(c.x,c.y,c.w,c.h);ctx.fillStyle='#fca5a5';ctx.fillRect(c.x+4,c.y+c.h-6,c.w-8,4)}
+      for(const f of level.fallers){if(f.state==='fallen')continue;const sh=f.state==='shake'?(Math.random()-.5)*3:0;ctx.fillStyle=f.state==='shake'?'#f59e0b':'#8b5cf6';ctx.fillRect(f.x+sh,f.y,f.w,f.h)}
+      for(const sp of level.spikes){ctx.fillStyle='#ff4466';ctx.beginPath();for(let i=0;i<3;i++){const sx=sp.x+(i+.5)*(sp.w/3);ctx.moveTo(sx-sp.w/6+2,sp.y+sp.h);ctx.lineTo(sx,sp.y);ctx.lineTo(sx+sp.w/6-2,sp.y+sp.h)}ctx.fill()}
+      for(const sp of level.springs){ctx.fillStyle='#ff6b9d';ctx.fillRect(sp.x+4,sp.y,sp.w-8,sp.h);ctx.fillStyle='#ff9ec0';ctx.fillRect(sp.x+2,sp.y-2,sp.w-4,4)}
+      for(const c of level.coins){if(c.collected)continue;const bob=Math.sin(c.anim)*3;ctx.save();ctx.translate(c.x+8,c.y+8+bob);ctx.rotate(c.anim*.5);ctx.fillStyle='#ffd700';ctx.beginPath();ctx.arc(0,0,8,0,6.28);ctx.fill();ctx.fillStyle='#ffec80';ctx.beginPath();ctx.arc(-2,-2,3,0,6.28);ctx.fill();ctx.restore()}
+      for(const u of level.ultimates){if(u.collected)continue;const bob=Math.sin(u.anim)*4,pu=.7+Math.sin(u.anim*2)*.3;ctx.save();ctx.translate(u.x+12,u.y+12+bob);ctx.globalAlpha=.3*pu;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(0,0,16,0,6.28);ctx.fill();ctx.globalAlpha=1;const ug=ctx.createRadialGradient(0,0,2,0,0,11);ug.addColorStop(0,'#fff');ug.addColorStop(1,'#c0c0ff');ctx.fillStyle=ug;ctx.beginPath();ctx.arc(0,0,11,0,6.28);ctx.fill();ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(-14,0);ctx.lineTo(14,0);ctx.moveTo(0,-14);ctx.lineTo(0,14);ctx.stroke();ctx.restore()}
+      /* Crystal trophy */
+      for(const t of level.trophies){
+        if(t.collected)continue;t.anim+=.05;const bob=Math.sin(t.anim)*3;
+        ctx.save();ctx.translate(t.x+14,t.y+18+bob);
+        ctx.fillStyle='#4b5563';ctx.fillRect(-12,14,24,10);ctx.fillStyle='#6b7280';ctx.fillRect(-10,12,20,4);
+        ctx.fillStyle='#67e8f9';ctx.beginPath();ctx.moveTo(0,-16);ctx.lineTo(10,4);ctx.lineTo(0,12);ctx.lineTo(-10,4);ctx.closePath();ctx.fill();
+        ctx.fillStyle='#a5f3fc';ctx.beginPath();ctx.moveTo(0,-16);ctx.lineTo(5,-2);ctx.lineTo(0,4);ctx.lineTo(-3,-2);ctx.closePath();ctx.fill();
+        ctx.globalAlpha=.25+Math.sin(t.anim*2)*.15;ctx.fillStyle='#67e8f9';ctx.beginPath();ctx.arc(0,0,20,0,6.28);ctx.fill();
+        ctx.globalAlpha=1;ctx.restore();
+      }
+      for(const f of level.flags){ctx.fillStyle='#555';ctx.fillRect(f.x+12,f.y,4,f.h);ctx.fillStyle='#00ffb4';ctx.beginPath();ctx.moveTo(f.x+16,f.y);ctx.lineTo(f.x+36,f.y+10);ctx.lineTo(f.x+16,f.y+20);ctx.fill()}
+      for(const e of level.enemies){if(!e.alive)continue;ctx.fillStyle='#ff4466';ctx.beginPath();ctx.ellipse(e.x+e.w/2,e.y+e.h/2,e.w/2,e.h/2,0,0,6.28);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(e.x+e.w/2-5*e.dir,e.y+10,4,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(e.x+e.w/2+3*e.dir,e.y+10,4,0,6.28);ctx.fill();ctx.fillStyle='#111';ctx.beginPath();ctx.arc(e.x+e.w/2-5*e.dir+e.dir,e.y+10,2,0,6.28);ctx.fill();ctx.beginPath();ctx.arc(e.x+e.w/2+3*e.dir+e.dir,e.y+10,2,0,6.28);ctx.fill()}
+      /* Oasis builds + NPCs */
+      if(level.oasis){
+        // zones élémentales + atelier (univers libre)
+        const zones=[{x:100,c:'#0ea5e9',l:'💧 MINE EAU'},{x:350,c:'#a16207',l:'🌍 MINE TERRE'},{x:600,c:'#ef4444',l:'🔥 MINE FEU'},{x:850,c:'#94a3b8',l:'💨 MINE VENT'},{x:1100,c:'#67e8f9',l:'O₂ MINE'}];
+        for(const z of zones){
+          ctx.globalAlpha=0.14;ctx.fillStyle=z.c;ctx.fillRect(z.x,200,200,220);
+          ctx.globalAlpha=0.7;ctx.fillStyle=z.c;ctx.font='bold 11px monospace';ctx.textAlign='center';ctx.fillText(z.l,z.x+100,220);
+          // puits de mine
+          ctx.globalAlpha=0.5;ctx.fillStyle='#1e293b';ctx.fillRect(z.x+70,380,60,40);
+          ctx.strokeStyle=z.c;ctx.lineWidth=2;ctx.strokeRect(z.x+70,380,60,40);
+          ctx.globalAlpha=1;
+        }
+        // oxygène / atmosphère
+        ctx.globalAlpha=0.08;ctx.fillStyle='#67e8f9';ctx.fillRect(0,0,level.cols*TILE,120);ctx.globalAlpha=1;
+        ctx.fillStyle='rgba(103,232,249,0.5)';ctx.font='10px monospace';ctx.textAlign='left';
+        const atmo=level.atmosphere||50;
+        ctx.fillText('O₂ atmo '+atmo.toFixed(0)+' · logic '+(level.civLogic||1).toFixed(1)+' · 🍽'+(level.food||0),20,30);
+        // météo selon atmosphère
+        if(atmo<35){ // neige
+          ctx.fillStyle='rgba(255,255,255,0.7)';
+          for(let i=0;i<40;i++){const sx=(i*97+frame*1.5)%(level.cols*TILE),sy=(i*53+frame*2)%400;ctx.beginPath();ctx.arc(sx,sy,1.5,0,6.28);ctx.fill()}
+        }else if(atmo>70){ // chaleur
+          ctx.globalAlpha=0.08;ctx.fillStyle='#f97316';ctx.fillRect(0,0,level.cols*TILE,H);ctx.globalAlpha=1;
+        }else if(atmo>55){ // pluie
+          ctx.strokeStyle='rgba(147,197,253,0.35)';ctx.lineWidth=1;
+          for(let i=0;i<50;i++){const sx=(i*67+frame*8)%(level.cols*TILE),sy=(i*41+frame*12)%420;ctx.beginPath();ctx.moveTo(sx,sy);ctx.lineTo(sx-2,sy+10);ctx.stroke()}
+        }
+        // bâtiments de fond (profondeur)
+        for(let bi=0;bi<12;bi++){
+          const bx=80+bi*160,bh=40+(bi%4)*18;
+          ctx.globalAlpha=0.25;ctx.fillStyle=bi%2?'#334155':'#3f3f46';
+          ctx.fillRect(bx,13*TILE-28-bh,70,bh);
+          ctx.fillStyle='#fbbf24';for(let w=0;w<3;w++)ctx.fillRect(bx+8+w*20,13*TILE-28-bh+10,8,8);
+          ctx.globalAlpha=1;
+        }
+        // usine + magasins
+        const wshopX=(level.cols-10)*TILE;
+        ctx.fillStyle='#1e293b';ctx.fillRect(wshopX,13*TILE-90,220,90);
+        ctx.fillStyle='#f59e0b';ctx.font='bold 12px monospace';ctx.textAlign='center';
+        ctx.fillText('🏭 USINE D’OBJETS',wshopX+110,13*TILE-55);
+        ctx.fillStyle='#94a3b8';ctx.font='9px monospace';ctx.fillText('accessoires · nourriture · pièces',wshopX+110,13*TILE-35);
+        ctx.fillStyle='#0f172a';ctx.fillRect(wshopX+40,13*TILE-30,40,20);ctx.fillRect(wshopX+140,13*TILE-30,40,20);
+        // water pond
+        const pondX=420,pondY=13*TILE-20,pondW=160,pondH=18;
+        ctx.fillStyle='#0c4a6e';ctx.fillRect(pondX,pondY,pondW,pondH);
+        ctx.fillStyle='rgba(14,165,233,0.55)';ctx.fillRect(pondX+4,pondY+3,pondW-8,pondH-6);
+        ctx.strokeStyle='rgba(103,232,249,0.4)';ctx.lineWidth=1;
+        for(let wi=0;wi<3;wi++){
+          ctx.beginPath();
+          for(let wx=pondX+6;wx<pondX+pondW-6;wx+=8){
+            const yo=Math.sin((wx+frame*2)*0.05+wi)*1.5;
+            if(wx===pondX+6)ctx.moveTo(wx,pondY+6+wi*4+yo);else ctx.lineTo(wx,pondY+6+wi*4+yo);
+          }
+          ctx.stroke();
+        }
+        for(const b of (level.builds||[])){
+          const k=b.kind;
+          if(k==='palm'||k==='vine'){
+            ctx.fillStyle='#5b3a1a';ctx.fillRect(b.x+10,b.y-48,6,48);
+            ctx.fillStyle='#15803d';ctx.beginPath();ctx.ellipse(b.x+13,b.y-52,22,14,0,0,6.28);ctx.fill();
+            ctx.fillStyle='#22c55e';ctx.beginPath();ctx.ellipse(b.x+4,b.y-48,14,10,-.4,0,6.28);ctx.fill();
+            ctx.beginPath();ctx.ellipse(b.x+22,b.y-48,14,10,.4,0,6.28);ctx.fill();
+          }else if(k==='well'||k==='pond'||k==='fountain'){
+            ctx.fillStyle='#64748b';ctx.fillRect(b.x,b.y-18,28,18);ctx.fillStyle='#0ea5e9';ctx.fillRect(b.x+6,b.y-14,16,10);
+            ctx.fillStyle='#94a3b8';ctx.fillRect(b.x-2,b.y-22,32,6);
+          }else if(k==='bench'||k==='stall'){
+            ctx.fillStyle='#a16207';ctx.fillRect(b.x,b.y-10,36,6);ctx.fillRect(b.x+2,b.y-4,6,8);ctx.fillRect(b.x+28,b.y-4,6,8);
+          }else if(k==='house'||k==='hut'){
+            // grande belle maison
+            ctx.fillStyle='#c4a574';ctx.fillRect(b.x,b.y-52,56,52);
+            ctx.fillStyle='#8b4513';ctx.beginPath();ctx.moveTo(b.x-6,b.y-52);ctx.lineTo(b.x+28,b.y-78);ctx.lineTo(b.x+62,b.y-52);ctx.fill();
+            ctx.fillStyle='#1e3a5f';ctx.fillRect(b.x+20,b.y-28,16,28);
+            ctx.fillStyle='#7dd3fc';ctx.fillRect(b.x+6,b.y-42,12,10);ctx.fillRect(b.x+38,b.y-42,12,10);
+            ctx.fillStyle='#fbbf24';ctx.fillRect(b.x+22,b.y-18,4,4);
+          }else if(k==='garage'){
+            ctx.fillStyle='#64748b';ctx.fillRect(b.x,b.y-36,48,36);
+            ctx.fillStyle='#475569';ctx.fillRect(b.x+4,b.y-28,40,28);
+            ctx.strokeStyle='#94a3b8';ctx.strokeRect(b.x+4,b.y-28,40,28);
+          }else if(k==='lawn'){
+            ctx.fillStyle='#166534';ctx.fillRect(b.x,b.y-6,b.w||100,8);
+            ctx.fillStyle='#22c55e';for(let i=0;i<8;i++){ctx.fillRect(b.x+i*12,b.y-10,3,6)}
+          }else if(k==='fence'){
+            ctx.fillStyle='#a16207';for(let i=0;i<5;i++){ctx.fillRect(b.x+i*14,b.y-18,4,18);ctx.fillRect(b.x+i*14,b.y-18,14,3)}
+          }else if(k==='car'){
+            ctx.fillStyle='#3b82f6';ctx.fillRect(b.x,b.y-14,36,14);ctx.fillStyle='#1e293b';ctx.beginPath();ctx.arc(b.x+8,b.y,5,0,6.28);ctx.arc(b.x+28,b.y,5,0,6.28);ctx.fill();
+          }else if(k==='stack_gold'){
+            ctx.fillStyle='#fbbf24';ctx.fillRect(b.x,b.y-12,18,12);ctx.fillRect(b.x+4,b.y-20,18,12);ctx.fillRect(b.x+8,b.y-28,18,12);
+            ctx.fillStyle='#fde047';ctx.font='9px monospace';ctx.fillText('OR',b.x+6,b.y-30);
+          }else if(k==='stack_diamond'){
+            ctx.fillStyle='#67e8f9';ctx.beginPath();ctx.moveTo(b.x+12,b.y-28);ctx.lineTo(b.x+22,b.y-14);ctx.lineTo(b.x+12,b.y);ctx.lineTo(b.x+2,b.y-14);ctx.fill();
+            ctx.fillStyle='#a5f3fc';ctx.font='8px monospace';ctx.fillText('💎',b.x+4,b.y-30);
+          }else if(k==='stack_ore'){
+            ctx.fillStyle='#78716c';ctx.fillRect(b.x,b.y-10,16,10);ctx.fillRect(b.x+6,b.y-18,16,10);ctx.fillStyle='#a8a29e';ctx.fillRect(b.x+3,b.y-8,6,6);
+          }else if(k==='warehouse'||k==='lab'||k==='workshop'||k==='archive'){
+            ctx.fillStyle=k==='lab'?'#6366f1':k==='warehouse'?'#78716c':'#b45309';
+            ctx.fillRect(b.x,b.y-28,40,28);ctx.fillStyle='#78350f';ctx.beginPath();ctx.moveTo(b.x-4,b.y-28);ctx.lineTo(b.x+20,b.y-48);ctx.lineTo(b.x+44,b.y-28);ctx.fill();
+            ctx.fillStyle='#1e293b';ctx.fillRect(b.x+14,b.y-18,12,18);
+          }else if(k==='crate'){
+            ctx.fillStyle='#ca8a04';ctx.fillRect(b.x,b.y-16,20,16);ctx.strokeStyle='#854d0e';ctx.strokeRect(b.x,b.y-16,20,16);
+          }else if(k==='lamp'||k==='beacon'||k==='flagpole'){
+            ctx.fillStyle='#475569';ctx.fillRect(b.x+10,b.y-40,4,40);
+            ctx.fillStyle=k==='beacon'?'#f97316':'#fde047';ctx.beginPath();ctx.arc(b.x+12,b.y-44,7,0,6.28);ctx.fill();
+          }else if(k==='tower'||k==='lookout'){
+            ctx.fillStyle='#78716c';ctx.fillRect(b.x+4,b.y-56,20,56);ctx.fillStyle='#a8a29e';ctx.fillRect(b.x,b.y-62,28,10);
+          }else if(k==='statue'||k==='mural'||k==='swing'){
+            ctx.fillStyle='#a78bfa';ctx.fillRect(b.x+6,b.y-30,16,30);ctx.beginPath();ctx.arc(b.x+14,b.y-36,8,0,6.28);ctx.fill();
+          }else if(k==='garden'||k==='mower'){
+            ctx.fillStyle='#166534';ctx.fillRect(b.x,b.y-8,32,8);ctx.fillStyle='#4ade80';for(let gi=0;gi<4;gi++){ctx.beginPath();ctx.arc(b.x+6+gi*7,b.y-12,4,0,6.28);ctx.fill()}
+          }else if(k==='solar'||k==='antenna'||k==='gadget'||k==='drone'){
+            ctx.fillStyle='#0ea5e9';ctx.fillRect(b.x,b.y-20,28,14);ctx.fillStyle='#0369a1';ctx.fillRect(b.x+12,b.y-6,4,8);
+          }else if(k==='gate'||k==='rail'||k==='path'||k==='bridge'||k==='plaza'||k==='sign'||k==='banner'||k==='camp'||k==='pump'){
+            ctx.fillStyle='#92400e';ctx.fillRect(b.x,b.y-14,30,14);ctx.fillStyle='#fbbf24';ctx.fillRect(b.x+2,b.y-12,26,3);
+          }else{
+            ctx.fillStyle='#64748b';ctx.fillRect(b.x,b.y-16,22,16);
+          }
+        }
+        // contours terrains PNJ
+        for(const n of (level.npcs||[])){
+          if(n.plotX==null)continue;
+          ctx.strokeStyle='rgba(103,232,249,0.15)';ctx.lineWidth=1;
+          ctx.strokeRect(n.plotX,13*TILE-90,n.plotW||130,90);
+        }
+        const npcsSorted=[...(level.npcs||[])].sort((a,b)=>(a.depth||0.5)-(b.depth||0.5));
+        for(const n of npcsSorted){
+          const d=n.depth||0.5,sc=0.55+d*0.55;
+          const pw=n.w*sc,ph=n.h*sc;
+          const px=n.x,py=n.y-(1-d)*50+(1-sc)*10;
+          ctx.globalAlpha=0.45+d*0.55;
+          ctx.fillStyle=n.color||'#f59e0b';
+          if(ctx.roundRect){ctx.beginPath();ctx.roundRect(px,py,pw,ph,5);ctx.fill()}else ctx.fillRect(px,py,pw,ph);
+          ctx.fillStyle='#1e1b14';const eo=(n.facing||1)*2.5*sc;
+          ctx.beginPath();ctx.arc(px+pw/2-3*sc+eo,py+9*sc,2.5*sc,0,6.28);ctx.fill();
+          ctx.beginPath();ctx.arc(px+pw/2+3*sc+eo,py+9*sc,2.5*sc,0,6.28);ctx.fill();
+          ctx.globalAlpha=1;
+          ctx.fillStyle='rgba(255,255,255,0.9)';ctx.font=(9+d*2|0)+'px sans-serif';ctx.textAlign='center';
+          ctx.fillText((n.leader?'👑 ':'')+(n.name==='Hoo'?'🔊 ':'')+(n.sex==='F'?'♀ ':'♂ ')+n.name,px+pw/2,py-6);
+          if(n.bubble&&n.bubbleUntil>Date.now()){
+            const tw=Math.min(ctx.measureText(n.bubble).width+12,150);
+            const bx=px+pw/2-tw/2,by=py-28;
+            ctx.fillStyle='rgba(255,248,230,0.95)';
+            if(ctx.roundRect){ctx.beginPath();ctx.roundRect(bx,by,tw,20,5);ctx.fill()}else ctx.fillRect(bx,by,tw,20);
+            ctx.fillStyle='#3f2a0a';ctx.fillText(n.bubble.length>24?n.bubble.slice(0,23)+'…':n.bubble,px+pw/2,by+14);
+            ctx.fillStyle='rgba(255,248,230,0.95)';
+            ctx.beginPath();ctx.moveTo(px+pw/2-4,by+20);ctx.lineTo(px+pw/2,by+26);ctx.lineTo(px+pw/2+4,by+20);ctx.fill();
+          }
+        }
+      }
+      if(p.invuln<=0||Math.floor(p.invuln/4)%2===0){
+        const av=AVATARS.find(a=>a.id===avatarRef.current)||AVATARS[0];
+        ctx.fillStyle=av.color;
+        if(ctx.roundRect){ctx.beginPath();ctx.roundRect(p.x,p.y,p.w,p.h,av.body==='soft'?10:av.body==='metal'?3:6);ctx.fill()}else ctx.fillRect(p.x,p.y,p.w,p.h);
+        if(av.body==='glow'){ctx.globalAlpha=.35;ctx.fillStyle=av.accent;ctx.beginPath();ctx.arc(p.x+p.w/2,p.y+p.h/2,18,0,6.28);ctx.fill();ctx.globalAlpha=1}
+        if(av.body==='magic'){ctx.fillStyle=av.accent;ctx.fillRect(p.x+p.w-4,p.y+4,6,p.h-6)}
+        if(av.body==='suit'){ctx.fillStyle='#fff';ctx.fillRect(p.x+6,p.y+14,12,8)}
+        ctx.fillStyle=av.body==='stealth'||av.body==='bone'?'#111':'#07070f';const eo=p.facing*3;
+        ctx.beginPath();ctx.arc(p.x+p.w/2-4+eo,p.y+10,3,0,6.28);ctx.fill();
+        ctx.beginPath();ctx.arc(p.x+p.w/2+4+eo,p.y+10,3,0,6.28);ctx.fill();
+        ctx.font='14px serif';ctx.textAlign='center';ctx.fillText(av.icon,p.x+p.w/2,p.y-4);
+        if(!p.onGround&&p.jumpsLeft>0){ctx.fillStyle='rgba(167,139,250,.9)';ctx.beginPath();ctx.moveTo(p.x+p.w/2,p.y-8);ctx.lineTo(p.x+p.w/2+5,p.y-3);ctx.lineTo(p.x+p.w/2,p.y+2);ctx.lineTo(p.x+p.w/2-5,p.y-3);ctx.fill()}
+      }
+      for(const pt of particles){ctx.globalAlpha=pt.life/30;ctx.fillStyle=pt.color;ctx.beginPath();ctx.arc(pt.x,pt.y,pt.size,0,6.28);ctx.fill()}
+      ctx.globalAlpha=1;ctx.restore();
+    }
+
+    const loop=()=>{
+      const s=stateRef.current;
+      if(!s||s.player.dead||s.player.won){animRef.current=requestAnimationFrame(loop);return}
+      const keys=keysRef.current,touch=touchRef.current,p=s.player,level=s.level;
+      s.frame++;s.time+=1/60;setTimerDisplay(s.time.toFixed(1));
+
+      for(const m of level.movers){m.x+=m.speed*m.dir;if(m.x>m.ox+m.range||m.x<m.ox)m.dir*=-1}
+      for(const c of level.crushers){if(c.wait>0){c.wait--;continue}c.y+=c.speed*c.dir;if(c.y>c.oy+c.range){c.dir=-1;c.wait=40}if(c.y<c.oy){c.dir=1;c.wait=20}}
+      for(const f of level.fallers){if(f.state==='shake'){f.timer--;if(f.timer<=0){f.state='fall';f.vy=0}}if(f.state==='fall'){f.vy=(f.vy||0)+.4;f.y+=f.vy;if(f.y>level.rows*TILE+50)f.state='fallen'}}
+
+      let move=0;
+      if(keys.ArrowLeft||keys.KeyA||touch.left)move-=1;
+      if(keys.ArrowRight||keys.KeyD||touch.right)move+=1;
+      // dash (Shift / touch.dash) — marche au sol, en l’air, les 2 sens
+      if(p.dashCd>0)p.dashCd--;
+      const wantDash=keys.ShiftLeft||keys.ShiftRight||keys.KeyE||touch.dash;
+      if(wantDash&&p.dashCd<=0){
+        const dir=move!==0?move:p.facing;
+        p.vx=dir*14;p.dashCd=45;p.facing=dir>0?1:-1;
+        for(let i=0;i<10;i++)s.particles.push({x:p.x+p.w/2,y:p.y+p.h/2,vx:-dir*(2+Math.random()*3),vy:(Math.random()-.5)*4,life:20,color:'#67e8f9',size:3});
+        touch.dash=false;
+      }
+      p.vx+=move*MOVE_SPEED;p.vx*=FRICTION;if(Math.abs(p.vx)<.05)p.vx=0;if(move)p.facing=move>0?1:-1;
+
+      const jEdge=jumpBuf.current||touch.jumpEdge;jumpBuf.current=false;touch.jumpEdge=false;
+      if(jEdge&&(p.onGround||p.jumpsLeft>0)){
+        if(p.onGround){p.jumpsLeft=1;p.vy=JUMP_FORCE;AudioFX.jump()}
+        else if(p.jumpsLeft>0){p.jumpsLeft--;p.vy=JUMP_FORCE*.92;AudioFX.doubleJump();
+          for(let i=0;i<8;i++)s.particles.push({x:p.x+p.w/2,y:p.y+p.h,vx:(Math.random()-.5)*4,vy:Math.random()*-3,life:22,color:'#a78bfa',size:3})}
+        p.onGround=false;
+        for(let i=0;i<5;i++)s.particles.push({x:p.x+p.w/2,y:p.y+p.h,vx:(Math.random()-.5)*3,vy:Math.random()*-2,life:18,color:'#00ffb4',size:3});
+      }
+      p.vy+=GRAVITY;if(p.vy>MAX_FALL)p.vy=MAX_FALL;
+
+      const sol=solids(level);
+      p.x+=p.vx;
+      for(const t of sol){if(aabb(p,t)){if(p.vx>0)p.x=t.x-p.w;else if(p.vx<0)p.x=t.x+t.w;p.vx=0}}
+      for(const m of level.movers){if(aabb({x:p.x,y:p.y+1,w:p.w,h:p.h},m)&&p.vy>=0)p.x+=m.speed*m.dir}
+      p.y+=p.vy;let landed=false;
+      for(const t of sol){if(aabb(p,t)){if(p.vy>0){p.y=t.y-p.h;p.vy=0;landed=true}else if(p.vy<0){p.y=t.y+t.h;p.vy=0}}}
+      if(landed){p.onGround=true;p.jumpsLeft=2}else p.onGround=false;
+
+      for(const f of level.fallers){if(f.state==='idle'&&aabb(p,{x:f.x,y:f.y-2,w:f.w,h:f.h+4})&&p.vy>=0){f.state='shake';f.timer=25}}
+      if(p.invuln<=0){for(const c of level.crushers){if(aabb(p,c)){hurt(s);break}}}
+
+      for(const sp of level.springs){if(aabb(p,sp)&&p.vy>=0){p.vy=JUMP_FORCE*1.55;p.onGround=false;p.jumpsLeft=1;AudioFX.spring();
+        for(let i=0;i<8;i++)s.particles.push({x:sp.x+sp.w/2,y:sp.y,vx:(Math.random()-.5)*4,vy:Math.random()*-4,life:25,color:'#ff6b9d',size:4})}}
+      for(const c of level.coins){if(!c.collected&&aabb(p,{x:c.x,y:c.y,w:c.w,h:c.h})){c.collected=true;s.coinsCollected++;setScore(sc=>sc+COIN_VALUE);AudioFX.coin();
+        for(let i=0;i<10;i++)s.particles.push({x:c.x+8,y:c.y+8,vx:(Math.random()-.5)*5,vy:(Math.random()-.5)*5,life:30,color:'#ffd700',size:3})}c.anim+=.08}
+      for(const u of level.ultimates){if(!u.collected&&aabb(p,{x:u.x,y:u.y,w:u.w,h:u.h})){u.collected=true;s.ultimateCollected=true;setScore(sc=>sc+ULTIMATE_VALUE);AudioFX.ultimate();
+        for(let i=0;i<20;i++)s.particles.push({x:u.x+12,y:u.y+12,vx:(Math.random()-.5)*7,vy:(Math.random()-.5)*7,life:40,color:i%2?'#fff':'#c0c0ff',size:4})}u.anim+=.1}
+      for(const t of level.trophies){if(!t.collected&&aabb(p,{x:t.x,y:t.y,w:t.w,h:t.h})){t.collected=true;s.trophyGot=true;setScore(sc=>sc+200);AudioFX.trophy();
+        setSecretUnlocked(true);storage.set('mc_secret',true);
+        for(let i=0;i<25;i++)s.particles.push({x:t.x+14,y:t.y+10,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:45,color:'#67e8f9',size:4})}}
+      if(p.invuln<=0){for(const sp of level.spikes){if(aabb(p,sp)){hurt(s);break}}}
+      for(const e of level.enemies){if(!e.alive)continue;e.x+=e.vx*e.dir;let onE=true,hitW=false;const foot={x:e.x+(e.dir>0?e.w:0),y:e.y+e.h+2,w:4,h:4};
+        for(const t of level.tiles){if(aabb(foot,t))onE=false;if(aabb({x:e.x+e.vx*e.dir,y:e.y,w:e.w,h:e.h},t))hitW=true}
+        if(onE||hitW)e.dir*=-1;
+        if(p.invuln<=0&&aabb(p,e)){if(p.vy>0&&p.y+p.h<e.y+e.h*.6){e.alive=false;p.vy=JUMP_FORCE*.7;p.jumpsLeft=1;setScore(sc=>sc+25);AudioFX.stomp();
+          for(let i=0;i<12;i++)s.particles.push({x:e.x+e.w/2,y:e.y+e.h/2,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,life:30,color:'#ff4466',size:4})}else hurt(s)}}
+
+      /* ── Oasis : civilisation libre (pas un niveau plateforme) ── */
+      if(level.oasis&&level.npcs){
+        const groundY=13*TILE-28;
+        const maxX=level.cols*TILE-40;
+        const workshopX=maxX-280;
+        const roleKits={
+          architecte:['hut','tower','plaza'],jardinier:['palm','garden','pond'],ingénieure:['lamp','pump','antenna'],
+          marchand:['crate','stall','warehouse'],artiste:['statue','fountain','banner'],éclaireur:['path','camp','lookout'],
+          gardienne:['fence','beacon','archive'],inventeur:['gadget','solar','lab'],médecine:['well','fountain','hut'],fermier:['garden','crate','palm']
+        };
+        const elemBuild={eau:['pond','well','fountain'],terre:['hut','garden','palm'],feu:['beacon','lamp','camp'],vent:['antenna','banner','path']};
+        const labels={hut:'maison',tower:'tour',plaza:'place',palm:'palmier',garden:'jardin',pond:'mare',lamp:'lampe',pump:'pompe',antenna:'antenne',crate:'caisse',stall:'étal',warehouse:'entrepôt',statue:'statue',fountain:'fontaine',banner:'bannière',path:'sentier',camp:'camp',lookout:'guet',fence:'clôture',beacon:'balise',archive:'archive',gadget:'gadget',solar:'solaire',lab:'labo',well:'puits',workshop:'atelier'};
+        // évolution logique chaque ~1s
+        if(s.frame%60===0){
+          level.civLogic=(level.civLogic||1)+0.02;
+          for(const n of level.npcs){n.logic=(n.logic||1)+0.015;n.age=(n.age||1)+0.01}
+        }
+        for(const n of level.npcs){
+          n.timer--;n.buildCooldown--;
+          if(n.bubbleUntil&&Date.now()>n.bubbleUntil)n.bubble='';
+          if(n.state==='walk'){
+            if(!n.targetX){
+              n.targetX=Math.random()<0.18?workshopX+Math.random()*80:40+Math.random()*(maxX-80);
+              if(Math.random()<0.35)n.depth=Math.max(0.25,Math.min(1,n.depth+(Math.random()-0.5)*0.25));
+            }
+            const dx=n.targetX-n.x;
+            if(Math.abs(dx)<10){
+              n.vx=0;n.targetX=null;
+              if(Math.abs(n.x-workshopX)<120){n.state='workshop';n.timer=50;n.bubble='Usine / atelier';n.bubbleUntil=Date.now()+2000}
+              else if(Math.random()<0.4){n.state='task';n.timer=60;n.task=NPC_TASKS[Math.floor(Math.random()*NPC_TASKS.length)];n.bubble='Tâche : '+n.task;n.bubbleUntil=Date.now()+2500}
+              else{n.state='idle';n.timer=20+Math.random()*40}
+            }else{n.facing=dx>0?1:-1;n.vx=n.facing*(0.55+n.depth*0.35+Math.min(0.4,n.logic*0.04));n.x+=n.vx}
+          }else if(n.state==='task'){
+            n.vx=0;
+            if(n.timer===30)n.bubble=(n.task||'activité')+'…';n.bubbleUntil=Date.now()+1500;
+            if(n.timer<=0){
+              if(n.task==='vendre'||n.task==='inventaire'){level.builds.push({x:n.x,y:groundY+2-(1-n.depth)*40,kind:'stall',life:9999,owner:n.name,depth:n.depth})}
+              if(n.task==='cuisiner'){level.food=(level.food||0)+1}
+              n.state='idle';n.timer=20;n.task=null;
+            }
+          }else if(n.state==='idle'){
+            n.vx=0;
+            if(n.timer<=0){
+              const r=Math.random();
+              // Amina (leader) envoie des commandes de code aux autres
+              if(n.leader&&r<0.28){
+                const cmds=['build','mine','learn','create'];
+                const cmd=cmds[Math.floor(Math.random()*cmds.length)];
+                n.bubble='[code] '+cmd;n.bubbleUntil=Date.now()+2800;
+                // pas de voix pour les commandes — seulement bulles
+                for(const o of level.npcs){
+                  if(o.id===n.id)continue;
+                  if(cmd==='build'){o.state='build';o.timer=36;o.bubble='On construit ensemble';o.bubbleUntil=Date.now()+2000}
+                  else if(cmd==='mine'){o.state='mine';o.timer=45;o.targetX=150+Math.random()*900;o.bubble='Mine partagée';o.bubbleUntil=Date.now()+2000}
+                  else if(cmd==='learn'){o.lang=(o.lang||1)+0.12;o.bubble='Leçon FR +';o.bubbleUntil=Date.now()+2200;o.state='learn';o.timer=40}
+                  else{o.creativity=(o.creativity||1)+0.15;o.bubble='Création collective';o.bubbleUntil=Date.now()+2200;o.state='build';o.timer=30}
+                }
+                n.timer=50;
+              }else if(r<0.35&&n.buildCooldown<=0){n.state='build';n.timer=36}
+              else if(r<0.48){n.state='mine';n.timer=40;n.targetX=120+Math.random()*1000}
+              else if(r<0.6&&!n.partner){
+                let mate=null,nd=9999;
+                for(const o of level.npcs){if(o.id===n.id||o.sex===n.sex||o.partner)continue;const d=Math.abs(o.x-n.x);if(d<nd&&d<160){nd=d;mate=o}}
+                if(mate){n.state='pair';n.timer=100;n.partner=mate.id;mate.partner=n.id;mate.state='pair';mate.timer=100;
+                  n.bubble=`Couple avec ${mate.name}`;n.bubbleUntil=Date.now()+3000;
+                  mate.bubble=`Couple avec ${n.name}`;mate.bubbleUntil=Date.now()+3000;
+                }else{n.state='walk';n.timer=30}
+              }else if(r<0.78){
+                let nearest=null,nd=9999;
+                for(const o of level.npcs){if(o.id===n.id)continue;const d=Math.abs(o.x-n.x);if(d<nd&&d<130){nd=d;nearest=o}}
+                if(nearest){
+                  n.state='talk';n.timer=90;n.facing=nearest.x>n.x?1:-1;
+                  nearest.state='talk';nearest.timer=90;nearest.facing=n.x>nearest.x?1:-1;
+                  // dialogues salutations seulement (voix autorisée)
+                  const dlg=pickDialog(dialogUsedRef.current);
+                  dialogUsedRef.current.add(dlg.a);
+                  if(dialogUsedRef.current.size>FR_DIALOGS.length-2)dialogUsedRef.current.clear();
+                  n.bubble=dlg.a;n.bubbleUntil=Date.now()+3200;n.lastLine=dlg.a;
+                  nearest.bubble=dlg.b;nearest.bubbleUntil=Date.now()+3200;nearest.lastLine=dlg.b;
+                  if(n.name==='Hoo'||nearest.name==='Hoo'){
+                    const hoo=n.name==='Hoo'?n:nearest;
+                    setTimeout(()=>{hoo.bubble='Hoo yeaa !';hoo.bubbleUntil=Date.now()+2000},2600);
+                  }
+                  n.lang=(n.lang||1)+0.03;nearest.lang=(nearest.lang||1)+0.03;
+                  if(n.voiceOn&&Math.random()<0.4){
+                    try{
+                      speechSynthesis.cancel();
+                      const u1=new SpeechSynthesisUtterance(dlg.a);u1.lang='fr-FR';u1.rate=1;u1.volume=0.75;
+                      const u2=new SpeechSynthesisUtterance(dlg.b);u2.lang='fr-FR';u2.rate=1;u2.volume=0.75;
+                      u1.onend=()=>setTimeout(()=>speechSynthesis.speak(u2),300);
+                      speechSynthesis.speak(u1);
+                    }catch{}
+                  }
+                }else{n.state='walk';n.timer=25}
+              }else if(r<0.9){n.state='learn';n.timer=50}
+              else{n.state='walk';n.timer=25}
+            }
+          }else if(n.state==='mine'){
+            if(!n.targetX)n.targetX=150+Math.random()*900;
+            const dx=n.targetX-n.x;
+            if(Math.abs(dx)>12){n.facing=dx>0?1:-1;n.vx=n.facing*0.85;n.x+=n.vx}
+            else{
+              n.vx=0;
+              const mines=[{x:180,el:'eau'},{x:400,el:'terre'},{x:620,el:'feu'},{x:840,el:'vent'},{x:1050,el:'oxygene'}];
+              let near=mines[0],nd=9999;for(const m of mines){const d=Math.abs(m.x-n.x);if(d<nd){nd=d;near=m}}
+              n.inventories=(n.inventories||0)+1;
+              n.bubble='Mine '+near.el+' +1';n.bubbleUntil=Date.now()+2000;
+              n.element=near.el==='oxygene'?n.element:near.el;
+              n.state='idle';n.timer=25;n.targetX=null;
+            }
+            if(n.timer<=0){n.state='idle';n.timer=15}
+          }else if(n.state==='learn'){
+            n.vx=0;
+            if(n.timer===40||n.timer===25){
+              const mode=Math.random();
+              if(mode<0.33){
+                const L=FR_ALPHA[Math.floor(Math.random()*FR_ALPHA.length)].toUpperCase();
+                n.bubble='Lettre '+L;n.bubbleUntil=Date.now()+2200;n.lang=(n.lang||1)+0.05;
+              }else if(mode<0.66){
+                const i=Math.floor(Math.random()*FR_NUMS.length);
+                n.bubble=i+' = '+FR_NUMS[i];n.bubbleUntil=Date.now()+2200;n.lang=(n.lang||1)+0.04;
+              }else{
+                const ly=FR_LYRICS[Math.floor(Math.random()*FR_LYRICS.length)];
+                n.bubble=ly.slice(0,42)+(ly.length>42?'…':'');n.bubbleUntil=Date.now()+2800;
+                n.creativity=(n.creativity||1)+0.06;n.lang=(n.lang||1)+0.04;
+              }
+              // enseigne un voisin proche (sans voix)
+              for(const o of level.npcs){
+                if(o.id!==n.id&&Math.abs(o.x-n.x)<100){o.lang=(o.lang||1)+0.03;o.bubble='J’apprends';o.bubbleUntil=Date.now()+1500}
+              }
+            }
+            if(n.timer<=0){n.state='idle';n.timer=20}
+          }else if(n.state==='talk'||n.state==='pair'){
+            n.vx=0;
+            if(n.state==='pair'&&n.timer===50){
+              const bx=Math.floor(n.x/TILE)*TILE;
+              level.builds.push({x:bx,y:groundY+2,kind:'hut',life:9999,owner:n.name,homeFor:[n.name,(level.npcs.find(o=>o.id===n.partner)||{}).name]});
+              n.bubble='Maison de couple';n.bubbleUntil=Date.now()+2500;
+            }
+            if(n.timer<=0){n.state='idle';n.timer=18}
+          }else if(n.state==='workshop'){
+            n.vx=0;
+            if(n.timer===25){
+              const res=['eau','terre','feu','vent','oxygène','atmosphère'][Math.floor(Math.random()*6)];
+              n.inventories=(n.inventories||0)+1;
+              n.bubble=`+ ${res}`;n.bubbleUntil=Date.now()+2200;
+              n.logic=(n.logic||1)+0.08;
+            }
+            if(n.timer<=0){n.state='build';n.timer=30}
+          }else if(n.state==='build'){
+            n.vx=0;
+            // retour au terrain personnel
+            if(n.plotX!=null&&Math.abs(n.x-(n.plotX+40))>20){
+              n.targetX=n.plotX+40;n.state='walk';n.timer=40;
+            }else if(n.timer===18){
+              const gy2=groundY+2;
+              if(!n.hasHouse){
+                level.builds.push({x:n.plotX+10,y:gy2,kind:'house',life:9999,owner:n.name,plot:n.id});
+                n.hasHouse=true;n.bubble='Maison élevée';n.bubbleUntil=Date.now()+2200;
+              }else if(!n.hasGarage){
+                level.builds.push({x:n.plotX+70,y:gy2,kind:'garage',life:9999,owner:n.name,plot:n.id});
+                n.hasGarage=true;n.bubble='Garage +';n.bubbleUntil=Date.now()+2000;
+              }else if(!n.hasYard){
+                level.builds.push({x:n.plotX,y:gy2,kind:'lawn',w:n.plotW||130,life:9999,owner:n.name});
+                level.builds.push({x:n.plotX,y:gy2,kind:'fence',life:9999,owner:n.name});
+                level.builds.push({x:n.plotX+90,y:gy2,kind:'car',life:9999,owner:n.name});
+                if(Math.random()<0.5)level.builds.push({x:n.plotX+50,y:gy2,kind:'swing',life:9999,owner:n.name});
+                n.hasYard=true;n.bubble='Jardin aménagé';n.bubbleUntil=Date.now()+2200;
+              }else{
+                // piles de ressources plutôt que maisons
+                const stacks=['stack_gold','stack_ore','stack_diamond','stack_ore','garden'];
+                const kind=stacks[Math.floor(Math.random()*stacks.length)];
+                const bx=n.plotX+20+Math.random()*60;
+                level.builds.push({x:bx,y:gy2,kind,life:9999,owner:n.name});
+                n.bubble='Stock '+(kind.includes('gold')?'or':kind.includes('diamond')?'diamant':'minerai');
+                n.bubbleUntil=Date.now()+2000;
+              }
+              n.buildCooldown=100+Math.random()*100;n.mood=Math.min(2,n.mood+0.08);
+            }
+            if(n.timer<=0){n.state='idle';n.timer=20}
+          }
+          n.y=groundY;if(n.x<40)n.x=40;if(n.x>maxX)n.x=maxX;
+        }
+        // piles collectives (or / diamant / minerai) — peu de maisons hors terrains
+        if(s.frame%140===0&&level.builds.length<280){
+          const stacks=['stack_gold','stack_ore','stack_diamond','palm','lamp'];
+          const kind=stacks[Math.floor(Math.random()*stacks.length)];
+          const bx=60+Math.random()*Math.max(200,maxX-120);
+          level.builds.push({x:bx,y:groundY+2,kind,life:9999,owner:'Collectif'});
+          level.civLogic=(level.civLogic||1)+0.03;
+        }
+        // couple M+F avec terrains aménagés → nouvel habitant + terrain
+        if(s.frame%700===0&&level.npcs.length<22){
+          const moms=level.npcs.filter(n=>n.sex==='F'&&n.hasHouse&&n.hasYard);
+          const dads=level.npcs.filter(n=>n.sex==='M'&&n.hasHouse&&n.hasYard);
+          if(moms.length&&dads.length){
+            const mom=moms[Math.floor(Math.random()*moms.length)];
+            const dad=dads[Math.floor(Math.random()*dads.length)];
+            const childSex=Math.random()>0.5?'F':'M';
+            const id=level.npcs.length;
+            const plotX=Math.max(...level.npcs.map(n=>n.plotX||0))+150;
+            // étendre sol si besoin
+            if(plotX+140>level.cols*TILE){
+              const add=Math.ceil((plotX+160)/TILE)-level.cols+2;
+              const gy=13*TILE;
+              for(let c=level.cols;c<level.cols+add;c++){
+                level.tiles.push({x:c*TILE,y:gy,w:TILE,h:TILE});
+                level.tiles.push({x:c*TILE,y:gy+TILE,w:TILE,h:TILE});
+                level.tiles.push({x:c*TILE,y:gy+TILE*2,w:TILE,h:TILE});
+              }
+              level.cols+=add;
+            }
+            level.npcs.push({
+              id,name:(childSex==='F'?'Lina':'Samir')+id,sex:childSex,color:mom.color,role:mom.role,element:dad.element||mom.element,
+              x:plotX+40,y:groundY,w:18,h:22,vx:0,vy:0,facing:1,state:'idle',timer:50,targetX:null,
+              bubble:'Nouveau foyer',bubbleUntil:Date.now()+4000,
+              phrases:['J’apprends.','Mon terrain.','Je construis.'],buildCooldown:80,inventories:0,mood:1,partner:null,age:0.2,logic:0.6,
+              lang:0.8,creativity:0.8,voiceOn:true,depth:0.6,task:null,lastLine:'',
+              plotX,plotW:130,hasHouse:false,hasGarage:false,hasYard:false,tradeOffer:null,leader:false
+            });
+            mom.bubble='Famille +1';mom.bubbleUntil=Date.now()+3000;
+            dad.bubble='Terrain pour l’enfant';dad.bubbleUntil=Date.now()+3000;
+          }
+        }
+        // atmosphère + usine + anomalies visuelles
+        if(s.frame%90===0){
+          level.atmosphere=Math.max(10,Math.min(95,(level.atmosphere||50)+(Math.random()-0.45)*6));
+          level.food=(level.food||5)+Math.floor(Math.random()*2);
+        }
+        if(s.frame%180===0){
+          level.builds.push({x:maxX-220,y:groundY+2,kind:'gadget',life:9999,owner:'Usine',depth:0.9});
+          level.factory=(level.factory||0)+1;
+        }
+        // sauvegarde auto toutes les ~7 s
+        if(s.frame%420===0){
+          storage.set('mc_oasis_world',{builds:level.builds,npcs:level.npcs.map(n=>({id:n.id,name:n.name,sex:n.sex,color:n.color,role:n.role,element:n.element,x:n.x,y:n.y,partner:n.partner,age:n.age,logic:n.logic,inventories:n.inventories,phrases:n.phrases,leader:n.leader,lang:n.lang,creativity:n.creativity,depth:n.depth})),civLogic:level.civLogic,visits:level.visits||1,cols:level.cols,atmosphere:level.atmosphere,food:level.food,factory:level.factory});
+        }
+      }
+
+      for(const f of level.flags){if(aabb(p,f)){
+        p.won=true;AudioFX.win();
+        const bonus=Math.max(0,Math.floor(120-s.time)*2)+s.coinsCollected*5+(s.ultimateCollected?50:0)+(s.trophyGot?100:0);
+        const finalScore=score+bonus+50;
+        setScore(sc=>{const ns=sc+bonus+50;if(ns>highScore){setHighScore(ns);storage.set('mc_hs',ns)}return ns});
+        const name=playerName||'Anonyme';
+        const entry={name,score:finalScore,time:+s.time.toFixed(1),date:Date.now()};
+        setLeaderboard(prev=>{const lvl=String(levelIdx);const arr=[...(prev[lvl]||[]),entry].sort((a,b)=>b.score-a.score||a.time-b.time).slice(0,20);const n={...prev,[lvl]:arr};storage.set('mc_lb',n);return n});
+        wsSend({type:'score',level:levelIdx,name,score:finalScore,time:+s.time.toFixed(1)});
+        if(levelIdx<5){const nu=Math.max(unlocked,levelIdx+2);if(nu>unlocked){setUnlocked(nu);storage.set('mc_unl',nu)}}
+        setTimeout(()=>setScreen('levelcomplete'),600);
+      }}
+      if(p.y>level.rows*TILE+100)hurt(s,true);
+      if(p.invuln>0)p.invuln--;
+
+      /* Camera: full map bounds — follows player into secret left zone */
+      const mapW=level.cols*TILE,mapH=level.rows*TILE;
+      s.camera.x=Math.max(0,Math.min(p.x-W/2+p.w/2,Math.max(0,mapW-W)));
+      s.camera.y=Math.max(0,Math.min(p.y-H/2+p.h/2,Math.max(0,mapH-H)));
+
+      s.particles=s.particles.filter(pt=>{pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=.15;pt.life--;return pt.life>0});
+      p.animTimer++;if(p.animTimer>6){p.animTimer=0;p.animFrame=(p.animFrame+1)%4}
+      draw(ctx,s);
+      animRef.current=requestAnimationFrame(loop);
+    };
+    animRef.current=requestAnimationFrame(loop);
+    return()=>cancelAnimationFrame(animRef.current);
+  },[screen,highScore,unlocked,levelIdx,score,playerName]);
+
+  const setTouch=(key,val)=>()=>{if(key==='jump'){if(val&&!touchRef.current.jump)touchRef.current.jumpEdge=true;touchRef.current.jump=val}else touchRef.current[key]=val};
+  const joinLounge=()=>{
+    if(!loggedIn){setAccountMsg('Compte requis pour la salle détente.');return}
+    const name=(playerName||'Joueur').slice(0,16);
+    storage.set('mc_name',name);
+    const avCol=(AVATARS.find(a=>a.id===avatarRef.current)||AVATARS[0]).color;
+    loungeMeRef.current={id:null,name,x:300,y:420,vx:0,vy:0,facing:1,onGround:false,color:avCol,bubble:'',bubbleUntil:0,jumpsLeft:2,avatar:avatarRef.current};
+    loungeOthersRef.current=new Map();
+    if(wsStatus==='on')wsSend({type:'lounge_join',name});
+    setScreen('lounge');
+  };
+  const leaveLounge=()=>{try{stopJukebox()}catch{};wsSend({type:'lounge_leave'});setMyLoungeId(null);myLoungeIdRef.current=null;setScreen('menu')};
+  const startGame=(idx=0)=>{
+    if((idx===5||LEVELS[idx]?.oasis)&&!loggedIn){setAccountMsg('Compte requis pour l’Oasis.');return}
+    try{stopJukebox()}catch{};
+    initLevel(idx);setScreen('playing');
+  };
+  const nextLevel=()=>{if(levelIdx===5||levelIdx>=4)setScreen('win');else{initLevel(levelIdx+1,true,true);setScreen('playing')}};
+  const postBab=()=>{
+    const name=(playerName||'Anonyme').slice(0,16),text=babText.trim().slice(0,120);if(!text)return;
+    storage.set('mc_name',name);const entry={author:name,text,time:Date.now()};
+    setBabMsgs(p=>[entry,...p].slice(0,50));storage.set('mc_bab',[entry,...babMsgs].slice(0,50));
+    wsSend({type:'bab',author:name,text});setBabText('');
+  };
+  const createAccount=()=>{
+    const u=(playerName||'').trim().slice(0,16),p=(playerPass||'').trim();
+    if(u.length<2){setAccountMsg('Nom trop court.');return}
+    if(p.length<3){setAccountMsg('Mot de passe min. 3 caractères.');return}
+    if(accounts.some(a=>a.user===u)){setAccountMsg('Ce nom existe déjà.');return}
+    const acc={user:u,pass:p,created:Date.now(),score:highScore,sessions:1,playMs:0,last:Date.now(),points:0,vip:0,avatar:avatar,titles:[],accessories:[]};
+    const next=[acc,...accounts].slice(0,80);
+    setAccounts(next);storage.set('mc_accounts',next);storage.set('mc_name',u);
+    storage.set('mc_session',{user:u,vip:0,points:0});
+    setLoggedIn(true);setVipRank(0);setAccountPoints(0);
+    setAccountMsg('Compte créé. Bienvenue, '+u+' !');setPlayerPass('');
+  };
+  const loginAccount=()=>{
+    const u=(playerName||'').trim(),p=(playerPass||'').trim();
+    const acc=accounts.find(a=>a.user===u&&a.pass===p);
+    if(!acc){setAccountMsg('Identifiants incorrects.');return}
+    acc.sessions=(acc.sessions||0)+1;acc.last=Date.now();
+    const next=accounts.map(a=>a.user===u?acc:a);
+    setAccounts(next);storage.set('mc_accounts',next);storage.set('mc_name',u);
+    storage.set('mc_session',{user:u,vip:acc.vip||0,points:acc.points||0});
+    setLoggedIn(true);setVipRank(acc.vip||0);setAccountPoints(acc.points||0);
+    setAccountMsg('Connecté : '+u);setPlayerPass('');
+  };
+  const vipCost=(r)=>Math.floor(50*Math.pow(1.22,r)); // rank r+1 cost (rank 0→1 ...)
+  const buyVipRank=()=>{
+    if(!loggedIn){setAccountMsg('Connecte-toi d’abord.');return}
+    if(vipRank>=33){setAccountMsg('Rank VIP max (33).');return}
+    const cost=vipCost(vipRank);
+    if(accountPoints<cost){setAccountMsg('Points insuffisants ('+cost+' requis).');return}
+    const nr=vipRank+1,np=accountPoints-cost;
+    setVipRank(nr);setAccountPoints(np);
+    setAccounts(prev=>{
+      const next=prev.map(a=>{
+        if(a.user!==playerName)return a;
+        const titles=[...(a.titles||[]),'VIP '+nr];
+        return {...a,vip:nr,points:np,titles};
+      });
+      storage.set('mc_accounts',next);return next;
+    });
+    storage.set('mc_session',{user:playerName,vip:nr,points:np});
+    setAccountMsg('VIP Rank '+nr+' débloqué !');
+  };
+  const requireAccount=(fn)=>{
+    if(!loggedIn){setAccountMsg('Crée ou connecte un compte pour accéder.');setPanelTab('bab');return}
+    fn();
+  };
+  const sendSupportTicket=()=>{
+    const name=(playerName||'Anonyme').slice(0,16),text=babText.trim().slice(0,200);if(!text)return;
+    const t={id:Date.now(),author:name,text,time:Date.now(),status:'pending',replies:[]};
+    const next=[t,...supportTickets].slice(0,40);
+    setSupportTickets(next);storage.set('mc_support_tickets',next);
+    setBabMsgs(p=>[{author:name,text:'[Support] '+text,time:Date.now()},...p].slice(0,50));
+    setBabText('');wsSend({type:'bab',author:name,text:'[Support] '+text});
+  };
+  const replySupportTicket=(id,reply)=>{
+    const next=supportTickets.map(t=>{
+      if(t.id!==id)return t;
+      return {...t,status:'answered',replies:[...(t.replies||[]),{author:'Créateur',text:reply,time:Date.now()}]};
+    });
+    setSupportTickets(next);storage.set('mc_support_tickets',next);
+  };
+  const spendResource=(type,amount=1)=>{
+    setOasisResources(r=>{
+      if((r[type]||0)<amount)return r;
+      const n={...r,[type]:r[type]-amount};
+      storage.set('mc_oasis_res',n);return n;
+    });
+  };
+  const addResource=(type,amount=1)=>{
+    setOasisResources(r=>{const n={...r,[type]:(r[type]||0)+amount};storage.set('mc_oasis_res',n);return n});
+  };
+  // Offres commerce PNJ : ils fixent le prix en points
+  const TRADE_CATALOG=[
+    {give:'eau',giveAmt:3,want:8,label:'💧 Eau x3'},
+    {give:'terre',giveAmt:3,want:7,label:'🌍 Terre x3'},
+    {give:'feu',giveAmt:2,want:10,label:'🔥 Feu x2'},
+    {give:'vent',giveAmt:2,want:9,label:'💨 Vent x2'},
+    {give:'gold',giveAmt:1,want:25,label:'🥇 Or x1'},
+    {give:'diamond',giveAmt:1,want:45,label:'💎 Diamant x1'},
+    {give:'ore',giveAmt:2,want:15,label:'⛏ Minerai x2'},
+    {give:'food',giveAmt:4,want:12,label:'🍽 Nourriture x4'},
+  ];
+  const doTrade=(offer)=>{
+    if(!loggedIn){setTradeMsg('Compte requis.');return}
+    if(accountPoints<(offer.want||0)){setTradeMsg('Pas assez de points ('+offer.want+').');return}
+    const np=accountPoints-offer.want;
+    setAccountPoints(np);
+    setAccounts(prev=>{
+      const next=prev.map(a=>a.user===playerName?{...a,points:np}:a);
+      storage.set('mc_accounts',next);return next;
+    });
+    storage.set('mc_session',{user:playerName,vip:vipRank,points:np});
+    if(['gold','diamond','ore','food'].includes(offer.give)){
+      setGodInv(g=>{const n={...g,[offer.give]:(g[offer.give]||0)+(offer.giveAmt||1)};storage.set('mc_god_inv',n);return n});
+    }else{
+      addResource(offer.give,offer.giveAmt||1);
+    }
+    setTradeMsg('Échange OK : '+offer.label+' pour '+offer.want+' pts');
+    const L=stateRef.current?.level;
+    if(L?.npcs?.length){
+      const m=L.npcs.find(n=>n.role==='marchand')||L.npcs[0];
+      if(m){m.bubble='Marché conclu !';m.bubbleUntil=Date.now()+2500}
+    }
+  };
+  const npcSpeak=(text)=>{
+    try{
+      if(!window.speechSynthesis)return;
+      window.speechSynthesis.cancel();
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang='fr-FR';u.rate=1;u.pitch=1;u.volume=0.7;
+      window.speechSynthesis.speak(u);
+    }catch{}
+  };
+  const talkToOasis=()=>{
+    const t=oasisChat.trim().slice(0,100);if(!t||!stateRef.current?.level?.oasis)return;
+    const level=stateRef.current.level;
+    // le Créateur peut parler ; les PNJ répondent en dialogue (voix seulement si salutation)
+    const isGreet=/all[oô]|bonjour|ça va|salut|merci/i.test(t);
+    if(isGreet)npcSpeak(t);
+    for(const n of level.npcs){
+      if(Math.abs(n.x-stateRef.current.player.x)<280){
+        n.bubble='Créateur : '+t.slice(0,40);n.bubbleUntil=Date.now()+3500;
+        n.lang=(n.lang||1)+0.05;n.creativity=(n.creativity||1)+0.03;
+        setTimeout(()=>{
+          const dlg=FR_DIALOGS[Math.floor(Math.random()*FR_DIALOGS.length)];
+          n.bubble=dlg.b;n.bubbleUntil=Date.now()+3000;
+          if(isGreet&&n.voiceOn)npcSpeak(dlg.b);
+        },1600);
+      }
+    }
+    setOasisChat('');
+  };
+  const doDash=()=>{touchRef.current.dash=true};
+  const askPublicAI=()=>{
+    const q=aiInput.trim();if(!q)return;
+    const lower=q.toLowerCase();
+    let ans='Je suis l’assistant du jeu. Essaie : « oasis », « compte », « commandes », « support ».';
+    if(/oasis|pnj|village/.test(lower))ans='L’Oasis est un monde parallèle : PNJ autonomes, mines, apprentissage FR, construction collective. Débloque-la via le trophée ou le mode secret.';
+    else if(/compte|login|mot de passe/.test(lower))ans='Crée un compte dans « Compte joueur ». Le Créateur voit scores et temps dans l’onglet secret.';
+    else if(/support|ticket/.test(lower))ans='Onglet Support : envoie un ticket. Seul le mode secret peut répondre.';
+    else if(/commande|touche|dash|saut/.test(lower))ans='←→ ou joystick, Espace/▲ saut, Shift ou E ou DASH pour dash. Échap / Quitter pour sortir.';
+    else if(/bonjour|all[oô]|salut/.test(lower))ans='Allô oui, ça va bien merci ! Bienvenue sur MOVECOIN.';
+    else if(/musique|jukebox|harpe/.test(lower))ans='Jukebox : harpe, violon, tambours, guitare — son propre à la salle détente.';
+    setAiLog(l=>[...l,{role:'user',text:q},{role:'ai',text:ans}].slice(-20));
+    setAiInput('');
+  };
+  const runSecretAI=()=>{
+    const q=secretAiInput.trim();if(!q)return;
+    const lower=q.toLowerCase();
+    let ans='Commande inconnue. Essaye : ressources +, logic +, save oasis, clear tickets, unlock oasis, status.';
+    if(/ressources\s*\+|ressource/.test(lower)){
+      setOasisResources(r=>{const n={eau:r.eau+10,terre:r.terre+10,feu:r.feu+5,vent:r.vent+5,oxygene:r.oxygene+10,atmosphere:(r.atmosphere||0)+5};storage.set('mc_oasis_res',n);return n});
+      ans='Ressources oasis augmentées.';
+    }else if(/logic\s*\+|logique/.test(lower)){
+      const L=stateRef.current?.level;if(L?.oasis){L.civLogic=(L.civLogic||1)+1;ans='Logic civilisation +1 → '+(L.civLogic).toFixed(1)}else ans='Ouvre l’oasis pour booster la logic, ou la prochaine visite accumulera.';
+    }else if(/save oasis|sauv/.test(lower)){
+      const L=stateRef.current?.level;
+      if(L?.oasis){storage.set('mc_oasis_world',{builds:L.builds,npcs:L.npcs,civLogic:L.civLogic,visits:L.visits||1,cols:L.cols});ans='Monde oasis sauvegardé.'}
+      else ans='Pas d’oasis active en mémoire de session — le monde disque reste tel quel.';
+    }else if(/clear tickets|tickets/.test(lower)){
+      setSupportTickets([]);storage.set('mc_support_tickets',[]);ans='Tickets support effacés.';
+    }else if(/unlock oasis|débloq/.test(lower)){
+      setSecretUnlocked(true);storage.set('mc_secret',true);ans='Oasis débloquée dans le menu.';
+    }else if(/status|statut/.test(lower)){
+      ans=`Comptes: ${accounts.length} · Tickets: ${supportTickets.filter(t=>t.status==='pending').length} en attente · HS: ${highScore} · Oasis unlock: ${secretUnlocked}`;
+    }else if(/bonjour|all[oô]/.test(lower))ans='Allô Créateur. Grok à l’écoute — commandes intégrées prêtes.';
+    setSecretAiLog(l=>[...l,{role:'user',text:q},{role:'ai',text:ans}].slice(-24));
+    setSecretAiInput('');
+  };
+  const fmt=ts=>new Date(ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  // maj temps de jeu compte
+  useEffect(()=>{
+    const id=setInterval(()=>{
+      const u=storage.get('mc_name','');
+      if(!u||!loggedIn)return;
+      setAccounts(prev=>{
+        const next=prev.map(a=>{
+          if(a.user!==u)return a;
+          const pts=Math.max(a.points||0, Math.floor((a.score||0)/10)+Math.floor((a.playMs||0)/60000));
+          const sc=Math.max(a.score||0,highScore);
+          const npts=Math.max(pts, Math.floor(sc/10)+Math.floor(((a.playMs||0)+5000)/60000));
+          return {...a,playMs:(a.playMs||0)+5000,score:sc,points:npts,last:Date.now(),vip:a.vip||0};
+        });
+        const me=next.find(a=>a.user===u);
+        if(me){setAccountPoints(me.points||0);storage.set('mc_session',{user:u,vip:me.vip||0,points:me.points||0})}
+        storage.set('mc_accounts',next);return next;
+      });
+    },5000);
+    return()=>clearInterval(id);
+  },[highScore,loggedIn]);
+
+  /* ── Jukebox state ── */
+  const [jukeboxOn,setJukeboxOn]=useState(false);
+  const [jukeboxTrack,setJukeboxTrack]=useState(0);
+  const jukeboxRef=useRef(null);
+  const jukeboxCtxRef=useRef(null);
+  const jukeboxSrcRef=useRef(null);
+  const jukeboxNodes=useRef({});
+
+  const startJukebox=useCallback((trackIdx)=>{
+    try{
+      if(jukeboxRef.current){try{jukeboxRef.current.stop()}catch{}}
+      if(jukeboxSrcRef.current){try{jukeboxSrcRef.current.pause();jukeboxSrcRef.current=null}catch{}}
+      const track=TRACKS[trackIdx];
+      if(!jukeboxCtxRef.current)jukeboxCtxRef.current=new(window.AudioContext||window.webkitAudioContext)();
+      const ctx=jukeboxCtxRef.current;
+      if(ctx.state==='suspended')ctx.resume();
+      const master=ctx.createGain();master.gain.value=0.16;master.connect(ctx.destination);
+      const bps=track.bpm/60;
+      const intervals=[];
+      const scales={harp:[262,294,330,392,523,392,330,294],violin:[196,220,247,294,330,294,247,220],drum:[80,80,120,80,160,80,120,80],guitar:[110,146,165,196,220,196,165,146]};
+      const notes=scales[track.vibe]||scales.harp;
+      let ni=0;
+      const playNote=()=>{
+        const o=ctx.createOscillator(),g=ctx.createGain();
+        const f=notes[ni%notes.length];ni++;
+        if(track.vibe==='harp'){o.type='triangle';g.gain.setValueAtTime(0.12,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.9)}
+        else if(track.vibe==='violin'){o.type='sawtooth';g.gain.setValueAtTime(0.04,ctx.currentTime);g.gain.linearRampToValueAtTime(0.08,ctx.currentTime+0.1);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.7)}
+        else if(track.vibe==='drum'){
+          o.type='sine';o.frequency.setValueAtTime(f,ctx.currentTime);o.frequency.exponentialRampToValueAtTime(40,ctx.currentTime+0.15);
+          g.gain.setValueAtTime(0.25,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.2);
+        }
+        else{o.type='triangle';g.gain.setValueAtTime(0.1,ctx.currentTime);g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.45)}
+        if(track.vibe!=='drum')o.frequency.value=f;
+        o.connect(g);g.connect(master);o.start();o.stop(ctx.currentTime+(track.vibe==='drum'?0.22:0.95));
+      };
+      playNote();
+      const step=track.vibe==='drum'?1000/(bps*2):1000/bps;
+      intervals.push(setInterval(playNote,step));
+      if(track.vibe==='drum'){
+        const hat=()=>{
+          const buf=ctx.createBuffer(1,ctx.sampleRate*0.05,ctx.sampleRate);
+          const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.exp(-i/(d.length*0.25));
+          const src=ctx.createBufferSource(),g=ctx.createGain();src.buffer=buf;g.gain.value=0.08;src.connect(g);g.connect(master);src.start();
+        };
+        intervals.push(setInterval(hat,1000/(bps*4)));
+      }
+      jukeboxRef.current={stop:()=>{intervals.forEach(clearInterval);try{master.disconnect()}catch{}}};
+      setJukeboxOn(true);setJukeboxTrack(trackIdx);
+    }catch(e){console.error('jukebox',e)}
+  },[]);
+
+  const stopJukebox=useCallback(()=>{
+    if(jukeboxRef.current){jukeboxRef.current.stop();jukeboxRef.current=null}
+    setJukeboxOn(false);
+  },[]);
+
+  const nextTrack=useCallback(()=>{
+    const next=(jukeboxTrack+1)%TRACKS.length;
+    stopJukebox();setTimeout(()=>startJukebox(next),100);
+  },[jukeboxTrack,startJukebox,stopJukebox]);
+
+  const prevTrack=useCallback(()=>{
+    const prev=(jukeboxTrack-1+TRACKS.length)%TRACKS.length;
+    stopJukebox();setTimeout(()=>startJukebox(prev),100);
+  },[jukeboxTrack,startJukebox,stopJukebox]);
+
+  useEffect(()=>{return()=>{if(jukeboxRef.current)jukeboxRef.current.stop()}},[]);
+
+  /* ── Lounge multiplayer loop ── */
+  useEffect(()=>{
+    if(screen!=='lounge')return;
+    const canvas=canvasRef.current;if(!canvas)return;
+    const ctx=canvas.getContext('2d');
+    const LW=2400,LH=540,GROUND=478;
+    // Pool zone: x=1100..1600, pool water y=420..478, depth=58
+    const POOL_X=1050,POOL_W=500,POOL_Y=420,POOL_DEPTH=58;
+    // Terrace: x=950..1060 y=420
+    const TERRACE_X=950,TERRACE_W=115,TERRACE_Y=440;
+    // Jukebox: x=60, y=380
+    const JBOX_X=60,JBOX_Y=370,JBOX_W=80,JBOX_H=100;
+    // Basketball court 2D — further right of the pool
+    const COURT_X=1600,COURT_W=720,COURT_Y=300,COURT_H=178;
+    let lastSend=0;
+    let wallT=0;
+
+    // Wallpaper shapes definition (static, drawn in background panel)
+    const shapes=[
+      {type:'circle',x:80,y:60,r:45,color:'#ff2d78'},
+      {type:'triangle',x:200,y:30,size:60,color:'#ffbe00'},
+      {type:'diamond',x:330,y:70,size:40,color:'#00e5ff'},
+      {type:'circle',x:460,y:40,r:30,color:'#7b2fff'},
+      {type:'triangle',x:570,y:80,size:50,color:'#ff6b00'},
+      {type:'diamond',x:680,y:30,size:55,color:'#00ff94'},
+      {type:'circle',x:800,y:55,r:38,color:'#ff2d78'},
+      {type:'triangle',x:920,y:45,size:45,color:'#00e5ff'},
+      {type:'diamond',x:1040,y:65,size:42,color:'#ffbe00'},
+      {type:'circle',x:1160,y:35,r:32,color:'#ff6b00'},
+      {type:'triangle',x:1290,y:75,size:55,color:'#7b2fff'},
+      {type:'diamond',x:1430,y:40,size:48,color:'#00ff94'},
+      {type:'circle',x:1570,y:60,r:36,color:'#ff2d78'},
+      {type:'triangle',x:1700,y:30,size:52,color:'#ffbe00'},
+      // lower row
+      {type:'diamond',x:130,y:145,size:35,color:'#00e5ff'},
+      {type:'circle',x:260,y:130,r:28,color:'#ff6b00'},
+      {type:'triangle',x:390,y:155,size:38,color:'#00ff94'},
+      {type:'diamond',x:520,y:125,size:44,color:'#ff2d78'},
+      {type:'circle',x:650,y:140,r:42,color:'#7b2fff'},
+      {type:'triangle',x:780,y:150,size:36,color:'#ffbe00'},
+      {type:'diamond',x:910,y:130,size:38,color:'#00e5ff'},
+      {type:'circle',x:1050,y:145,r:30,color:'#ff2d78'},
+      {type:'triangle',x:1180,y:135,size:48,color:'#ff6b00'},
+      {type:'diamond',x:1320,y:155,size:40,color:'#7b2fff'},
+      {type:'circle',x:1460,y:130,r:35,color:'#00ff94'},
+      {type:'triangle',x:1600,y:145,size:42,color:'#ffbe00'},
+    ];
+
+    function drawShape(ctx,sh,alpha=1){
+      ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle=sh.color;
+      if(sh.type==='circle'){ctx.beginPath();ctx.arc(sh.x,sh.y,sh.r,0,Math.PI*2);ctx.fill()}
+      else if(sh.type==='triangle'){
+        const h=sh.size*0.866;
+        ctx.beginPath();ctx.moveTo(sh.x,sh.y-sh.size*0.6);ctx.lineTo(sh.x+sh.size/2,sh.y+h*0.4);ctx.lineTo(sh.x-sh.size/2,sh.y+h*0.4);ctx.closePath();ctx.fill();
+      }else if(sh.type==='diamond'){
+        const s=sh.size/2;
+        ctx.beginPath();ctx.moveTo(sh.x,sh.y-s);ctx.lineTo(sh.x+s,sh.y);ctx.lineTo(sh.x,sh.y+s);ctx.lineTo(sh.x-s,sh.y);ctx.closePath();ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    // platforms for lounge (with pool edges as walkable surface)
+    const plats=[
+      [150,420,120],[350,370,100],[600,395,130],
+      [TERRACE_X,TERRACE_Y,TERRACE_W], // terrace edge
+      [COURT_X,COURT_Y+COURT_H-4,COURT_W], // basketball court floor
+    ];
+
+    const loop=()=>{
+      wallT+=0.012;
+      const me=loungeMeRef.current;
+      if(!me){animRef.current=requestAnimationFrame(loop);return;}
+      const keys=keysRef.current,touch=touchRef.current;
+      let move=0;
+      if(keys.ArrowLeft||keys.KeyA||touch.left)move-=1;
+      if(keys.ArrowRight||keys.KeyD||touch.right)move+=1;
+      me.vx+=move*0.7;me.vx*=0.82;if(Math.abs(me.vx)<0.05)me.vx=0;
+      if(move)me.facing=move>0?1:-1;
+
+      const jEdge=jumpBuf.current||touch.jumpEdge;jumpBuf.current=false;touch.jumpEdge=false;
+      if(jEdge&&me.onGround){me.vy=-11;me.onGround=false;me.jumpsLeft=1;AudioFX.jump()}
+      else if(jEdge&&me.jumpsLeft>0){me.jumpsLeft--;me.vy=-10;AudioFX.doubleJump()}
+      me.vy+=0.55;if(me.vy>14)me.vy=14;
+      me.x+=me.vx;me.y+=me.vy;
+      if(me.x<20)me.x=20;if(me.x>LW-40)me.x=LW-40;
+
+      // Pool swim — slow fall if inside pool horizontally
+      const inPool=(me.x+12>POOL_X&&me.x+12<POOL_X+POOL_W&&me.y+28>POOL_Y);
+      if(inPool&&me.vy>1.5)me.vy*=0.6;
+
+      // Ground + pool bottom
+      const groundHere=inPool?(POOL_Y+POOL_DEPTH-28):GROUND-28;
+      if(me.y>=groundHere){me.y=groundHere;me.vy=0;me.onGround=true;me.jumpsLeft=2}
+      else me.onGround=false;
+
+      // Platform collisions
+      for(const[px,py,pw] of plats){
+        if(me.vy>=0&&me.x+24>px&&me.x<px+pw&&me.y+28>=py&&me.y+28<=py+16){
+          me.y=py-28;me.vy=0;me.onGround=true;me.jumpsLeft=2;
+        }
+      }
+
+      const now=Date.now();
+      if(now-lastSend>50){lastSend=now;wsSend({type:'lounge_move',x:me.x,y:me.y,facing:me.facing})}
+
+      /* ─── DRAW ─── */
+      ctx.save();
+
+      /* 1. Wallpaper background panel (top 200px) */
+      // dark base
+      ctx.fillStyle='#110e1c';ctx.fillRect(0,0,W,H);
+
+      // Wallpaper rectangle - darker panel with subtle grid
+      ctx.fillStyle='#1a1030';ctx.fillRect(0,0,W,195);
+      // grid lines
+      ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+      for(let gx=0;gx<W;gx+=40){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,195);ctx.stroke()}
+      for(let gy=0;gy<200;gy+=40){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(W,gy);ctx.stroke()}
+
+      // parallax stars
+      ctx.fillStyle='rgba(255,255,255,0.18)';
+      for(let i=0;i<20;i++){ctx.beginPath();ctx.arc((i*113)%W,195+(i*67)%345,1+(i%2)*.5,0,6.28);ctx.fill()}
+
+      // floor tiles (parquet chic)
+      const camX=Math.max(0,Math.min(me.x-W/2,LW-W));
+      ctx.translate(-Math.floor(camX),0);
+
+      // wall — wallpaper zone scrolls with world
+      ctx.fillStyle='#1a1030';ctx.fillRect(0,0,LW,195);
+      ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=1;
+      for(let gx=0;gx<LW;gx+=40){ctx.beginPath();ctx.moveTo(gx,0);ctx.lineTo(gx,195);ctx.stroke()}
+      for(let gy=0;gy<200;gy+=40){ctx.beginPath();ctx.moveTo(0,gy);ctx.lineTo(LW,gy);ctx.stroke()}
+
+      // Draw wallpaper shapes with pulse animation
+      for(const sh of shapes){
+        const pulse=0.65+0.2*Math.sin(wallT*2+(sh.x+sh.y)*0.01);
+        // glow
+        ctx.save();
+        const grd=ctx.createRadialGradient(sh.x,sh.y,0,sh.x,sh.y,(sh.r||sh.size||40)*1.5);
+        grd.addColorStop(0,sh.color+'40');grd.addColorStop(1,'transparent');
+        ctx.fillStyle=grd;ctx.beginPath();ctx.arc(sh.x,sh.y,(sh.r||sh.size||40)*1.5,0,Math.PI*2);ctx.fill();
+        ctx.restore();
+        drawShape(ctx,sh,pulse);
+      }
+      // separator line under wallpaper
+      const sepG=ctx.createLinearGradient(0,0,LW,0);
+      sepG.addColorStop(0,'#ff2d7880');sepG.addColorStop(0.33,'#ffbe0080');sepG.addColorStop(0.66,'#00e5ff80');sepG.addColorStop(1,'#00ff9480');
+      ctx.strokeStyle=sepG;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,195);ctx.lineTo(LW,195);ctx.stroke();
+
+      // Floor (parquet herringbone style)
+      const fG=ctx.createLinearGradient(0,195,0,GROUND);
+      fG.addColorStop(0,'#1e1228');fG.addColorStop(1,'#0f0a1a');
+      ctx.fillStyle=fG;ctx.fillRect(0,195,LW,GROUND-195);
+      // tile grid
+      ctx.strokeStyle='rgba(100,80,160,0.12)';ctx.lineWidth=1;
+      for(let fx=0;fx<LW;fx+=48){ctx.beginPath();ctx.moveTo(fx,195);ctx.lineTo(fx,GROUND);ctx.stroke()}
+      for(let fy=195;fy<GROUND;fy+=48){ctx.beginPath();ctx.moveTo(0,fy);ctx.lineTo(LW,fy);ctx.stroke()}
+      // baseboard
+      ctx.fillStyle='#2a1a4a';ctx.fillRect(0,195,LW,6);
+
+      // Soft glow orbs floating
+      for(let i=0;i<6;i++){
+        const ox=100+i*280,oy=250+Math.sin(wallT*0.9+i)*20;
+        ctx.save();ctx.globalAlpha=0.08;ctx.fillStyle=['#ff2d78','#00e5ff','#ffbe00','#7b2fff','#ff6b00','#00ff94'][i];
+        ctx.beginPath();ctx.arc(ox,oy,55,0,6.28);ctx.fill();ctx.restore();
+      }
+
+      // ── Platforms ──
+      for(const[px,py,pw] of plats){
+        ctx.fillStyle='#2a1a4a';ctx.fillRect(px,py,pw,12);
+        ctx.fillStyle='#6b3fa0';ctx.fillRect(px,py,pw,3);
+      }
+
+      // ── POOL ──
+      // Outer pit walls
+      ctx.fillStyle='#0d0818';ctx.fillRect(POOL_X,POOL_Y,POOL_W,POOL_DEPTH+10);
+      // Pool tiles (cyan/white mosaic feel)
+      ctx.fillStyle='#042030';ctx.fillRect(POOL_X+4,POOL_Y+4,POOL_W-8,POOL_DEPTH+4);
+      // tile grid
+      ctx.strokeStyle='rgba(0,220,255,0.15)';ctx.lineWidth=1;
+      for(let tx=POOL_X+4;tx<POOL_X+POOL_W;tx+=20){ctx.beginPath();ctx.moveTo(tx,POOL_Y+4);ctx.lineTo(tx,POOL_Y+POOL_DEPTH+4);ctx.stroke()}
+      for(let ty=POOL_Y+4;ty<POOL_Y+POOL_DEPTH+4;ty+=20){ctx.beginPath();ctx.moveTo(POOL_X+4,ty);ctx.lineTo(POOL_X+POOL_W-4,ty);ctx.stroke()}
+      // Animated water surface
+      ctx.save();ctx.globalAlpha=0.85;
+      const wG=ctx.createLinearGradient(0,POOL_Y,0,POOL_Y+POOL_DEPTH);
+      wG.addColorStop(0,'#00a8cc99');wG.addColorStop(1,'#0066aa44');
+      ctx.fillStyle=wG;ctx.fillRect(POOL_X+4,POOL_Y+4,POOL_W-8,POOL_DEPTH+4);
+      // water shimmer lines
+      ctx.strokeStyle='rgba(0,255,240,0.3)';ctx.lineWidth=2;
+      for(let wi=0;wi<5;wi++){
+        const wy=POOL_Y+12+wi*10;
+        ctx.beginPath();
+        for(let wx=POOL_X+4;wx<POOL_X+POOL_W-4;wx+=6){
+          const yoff=Math.sin((wx+wallT*80)*0.04+wi)*2.5;
+          if(wx===POOL_X+4)ctx.moveTo(wx,wy+yoff);else ctx.lineTo(wx,wy+yoff);
+        }
+        ctx.stroke();
+      }
+      ctx.restore();
+      // Pool edge/coping — white marble strip
+      ctx.fillStyle='#e8e0f0';ctx.fillRect(POOL_X,POOL_Y-6,POOL_W,6);
+      ctx.fillStyle='#ffffff';ctx.fillRect(POOL_X,POOL_Y-6,POOL_W,2);
+      // Pool label
+      ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle='#00ffee';ctx.font='bold 12px monospace';ctx.textAlign='center';
+      ctx.fillText('🏊 VIP POOL',POOL_X+POOL_W/2,POOL_Y-10);ctx.restore();
+
+      // ── BASKETBALL COURT 2D (à droite de la piscine) ──
+      {
+        const cx=COURT_X,cy=COURT_Y,cw=COURT_W,ch=COURT_H;
+        // floor
+        ctx.fillStyle='#1a1208';ctx.fillRect(cx,cy,cw,ch);
+        // wood parquet stripes
+        for(let i=0;i<cw;i+=28){
+          ctx.fillStyle=i%56===0?'#2a1c0e':'#23180c';
+          ctx.fillRect(cx+i,cy,14,ch);
+        }
+        // outer boundary
+        ctx.strokeStyle='#f5f5f4';ctx.lineWidth=3;ctx.strokeRect(cx+8,cy+8,cw-16,ch-16);
+        // center circle
+        ctx.beginPath();ctx.arc(cx+cw/2,cy+ch/2,36,0,6.28);ctx.stroke();
+        // center line
+        ctx.beginPath();ctx.moveTo(cx+cw/2,cy+8);ctx.lineTo(cx+cw/2,cy+ch-8);ctx.stroke();
+        // key areas (paint)
+        ctx.strokeStyle='#ffbe00';ctx.lineWidth=2;
+        // left key
+        ctx.strokeRect(cx+8,cy+ch/2-40,70,80);
+        ctx.beginPath();ctx.arc(cx+78,cy+ch/2,40, -Math.PI/2, Math.PI/2);ctx.stroke();
+        // right key
+        ctx.strokeRect(cx+cw-78,cy+ch/2-40,70,80);
+        ctx.beginPath();ctx.arc(cx+cw-78,cy+ch/2,40, Math.PI/2, -Math.PI/2);ctx.stroke();
+        // hoops
+        const drawHoop=(hx,facing)=>{
+          // backboard
+          ctx.fillStyle='#e8e8e8';ctx.fillRect(hx+(facing>0?-6:0),cy+ch/2-32,6,64);
+          // rim
+          ctx.strokeStyle='#ff6b00';ctx.lineWidth=3;
+          ctx.beginPath();ctx.arc(hx+(facing>0?14:-14),cy+ch/2,12,0,6.28);ctx.stroke();
+          // net
+          ctx.strokeStyle='rgba(255,255,255,0.55)';ctx.lineWidth=1;
+          for(let ni=0;ni<5;ni++){
+            const nx=hx+(facing>0?14:-14)+(ni-2)*4;
+            ctx.beginPath();ctx.moveTo(nx,cy+ch/2+10);ctx.lineTo(hx+(facing>0?14:-14)+(ni-2)*2,cy+ch/2+28);ctx.stroke();
+          }
+        };
+        drawHoop(cx+14,1);
+        drawHoop(cx+cw-14,-1);
+        // balls on court
+        const ballY=cy+ch-22;
+        [[cx+120,ballY],[cx+cw/2,ballY-8],[cx+cw-140,ballY]].forEach(([bx,by],bi)=>{
+          ctx.fillStyle='#ff8a00';ctx.beginPath();ctx.arc(bx,by,10,0,6.28);ctx.fill();
+          ctx.strokeStyle='#5b2d00';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(bx,by,10,0,6.28);ctx.stroke();
+          ctx.beginPath();ctx.moveTo(bx-8,by);ctx.lineTo(bx+8,by);ctx.stroke();
+          ctx.beginPath();ctx.moveTo(bx,by-8);ctx.lineTo(bx,by+8);ctx.stroke();
+        });
+        // label
+        ctx.save();ctx.globalAlpha=0.55;ctx.fillStyle='#ffbe00';ctx.font='bold 12px monospace';ctx.textAlign='center';
+        ctx.fillText('🏀 TERRAIN DE BASKET 2D',cx+cw/2,cy-10);ctx.restore();
+      }
+
+      // ── TERRASSE ──
+      ctx.fillStyle='#3a2a0a';ctx.fillRect(TERRACE_X,TERRACE_Y,TERRACE_W,GROUND-TERRACE_Y);
+      // deck planks
+      ctx.strokeStyle='rgba(200,150,60,0.3)';ctx.lineWidth=2;
+      for(let dp=TERRACE_Y;dp<GROUND;dp+=10){ctx.beginPath();ctx.moveTo(TERRACE_X,dp);ctx.lineTo(TERRACE_X+TERRACE_W,dp);ctx.stroke()}
+      // railing
+      ctx.strokeStyle='#d4a055';ctx.lineWidth=2;
+      ctx.beginPath();ctx.moveTo(TERRACE_X,TERRACE_Y);ctx.lineTo(TERRACE_X+TERRACE_W,TERRACE_Y);ctx.stroke();
+      // railing posts
+      for(let rp=TERRACE_X+10;rp<TERRACE_X+TERRACE_W;rp+=20){ctx.beginPath();ctx.moveTo(rp,TERRACE_Y);ctx.lineTo(rp,TERRACE_Y-25);ctx.stroke()}
+      ctx.beginPath();ctx.moveTo(TERRACE_X+8,TERRACE_Y-25);ctx.lineTo(TERRACE_X+TERRACE_W-8,TERRACE_Y-25);ctx.stroke();
+      // Lounge chair on terrace
+      ctx.fillStyle='#e8c060';ctx.fillRect(TERRACE_X+15,TERRACE_Y-8,50,8);
+      ctx.fillStyle='#c8a040';ctx.fillRect(TERRACE_X+15,TERRACE_Y-8,4,12);
+      ctx.fillRect(TERRACE_X+61,TERRACE_Y-8,4,12);
+      // Terrace label
+      ctx.save();ctx.globalAlpha=0.5;ctx.fillStyle='#ffcc66';ctx.font='bold 10px monospace';ctx.textAlign='center';
+      ctx.fillText('☀️ TERRASSE',TERRACE_X+TERRACE_W/2,TERRACE_Y-35);ctx.restore();
+
+      // ── JUKEBOX ──
+      const jPulse=jukeboxOn?0.5+Math.abs(Math.sin(wallT*4))*0.5:0;
+      // body
+      const jg=ctx.createLinearGradient(JBOX_X,JBOX_Y,JBOX_X+JBOX_W,JBOX_Y);
+      jg.addColorStop(0,'#3d0a52');jg.addColorStop(0.5,'#6a0f8a');jg.addColorStop(1,'#3d0a52');
+      ctx.fillStyle=jg;
+      if(ctx.roundRect){ctx.beginPath();ctx.roundRect(JBOX_X,JBOX_Y,JBOX_W,JBOX_H,10);ctx.fill()}
+      else ctx.fillRect(JBOX_X,JBOX_Y,JBOX_W,JBOX_H);
+      // chrome trim
+      ctx.strokeStyle='#d4a0ff';ctx.lineWidth=2;
+      if(ctx.roundRect){ctx.beginPath();ctx.roundRect(JBOX_X,JBOX_Y,JBOX_W,JBOX_H,10);ctx.stroke()}
+      // speaker grille
+      ctx.fillStyle='#1a0028';ctx.fillRect(JBOX_X+8,JBOX_Y+8,JBOX_W-16,40);
+      ctx.strokeStyle='rgba(200,100,255,0.3)';ctx.lineWidth=1;
+      for(let sg=JBOX_Y+12;sg<JBOX_Y+46;sg+=5){ctx.beginPath();ctx.moveTo(JBOX_X+10,sg);ctx.lineTo(JBOX_X+JBOX_W-10,sg);ctx.stroke()}
+      // top arch deco
+      const archG=ctx.createLinearGradient(JBOX_X+15,JBOX_Y,JBOX_X+JBOX_W-15,JBOX_Y);
+      archG.addColorStop(0,'#ff2d78');archG.addColorStop(0.33,'#ffbe00');archG.addColorStop(0.66,'#00e5ff');archG.addColorStop(1,'#ff2d78');
+      ctx.strokeStyle=archG;ctx.lineWidth=3;
+      ctx.beginPath();ctx.arc(JBOX_X+JBOX_W/2,JBOX_Y+8,JBOX_W*0.3,Math.PI,0);ctx.stroke();
+      // playing light
+      if(jukeboxOn){
+        ctx.save();ctx.globalAlpha=jPulse*0.8;
+        const lg=ctx.createRadialGradient(JBOX_X+JBOX_W/2,JBOX_Y+60,0,JBOX_X+JBOX_W/2,JBOX_Y+60,90);
+        lg.addColorStop(0,TRACKS[jukeboxTrack].vibe==='drill'?'#ff2d7840':TRACKS[jukeboxTrack].vibe==='trap'?'#7b2fff40':'#00ff9440');
+        lg.addColorStop(1,'transparent');
+        ctx.fillStyle=lg;ctx.beginPath();ctx.arc(JBOX_X+JBOX_W/2,JBOX_Y+60,90,0,6.28);ctx.fill();
+        ctx.restore();
+      }
+      // controls
+      ctx.fillStyle='#e0c0ff';ctx.fillRect(JBOX_X+8,JBOX_Y+52,JBOX_W-16,18);
+      ctx.fillStyle='#ff2d78';ctx.beginPath();ctx.arc(JBOX_X+22,JBOX_Y+61,5,0,6.28);ctx.fill();
+      ctx.fillStyle='#ffbe00';ctx.beginPath();ctx.arc(JBOX_X+40,JBOX_Y+61,5,0,6.28);ctx.fill();
+      ctx.fillStyle='#00e5ff';ctx.beginPath();ctx.arc(JBOX_X+58,JBOX_Y+61,5,0,6.28);ctx.fill();
+      // coin slot
+      ctx.fillStyle='#4a005a';ctx.fillRect(JBOX_X+25,JBOX_Y+74,JBOX_W-50,12);
+      ctx.strokeStyle='#d4a0ff';ctx.lineWidth=1;ctx.strokeRect(JBOX_X+25,JBOX_Y+74,JBOX_W-50,12);
+      // legs
+      ctx.fillStyle='#d4a0ff';
+      ctx.fillRect(JBOX_X+8,JBOX_Y+JBOX_H,8,12);
+      ctx.fillRect(JBOX_X+JBOX_W-16,JBOX_Y+JBOX_H,8,12);
+      // Jukebox label
+      ctx.save();ctx.globalAlpha=0.7+jPulse*0.3;
+      ctx.fillStyle=jukeboxOn?'#ff2d78':'#d4a0ff';ctx.font='bold 10px monospace';ctx.textAlign='center';
+      ctx.fillText('🎵 JUKEBOX',JBOX_X+JBOX_W/2,JBOX_Y-8);ctx.restore();
+      // Now playing
+      if(jukeboxOn){
+        const tr=TRACKS[jukeboxTrack];
+        ctx.save();ctx.globalAlpha=0.8+Math.sin(wallT*3)*0.2;
+        ctx.fillStyle='#fff';ctx.font='bold 10px monospace';ctx.textAlign='left';
+        ctx.fillText(`▶ ${tr.artist} — ${tr.title}`,JBOX_X+JBOX_W+8,JBOX_Y+20);
+        ctx.restore();
+      }
+
+      // ── Ground line ──
+      ctx.fillStyle='#2a1a4a';ctx.fillRect(0,GROUND,LW,10);
+      ctx.fillStyle='#6b3fa0';ctx.fillRect(0,GROUND,LW,2);
+
+      // ── Draw players ──
+      const drawPlayer=(pl,isMe)=>{
+        const px=pl.x,py=pl.y;
+        const pInPool=(px+12>POOL_X&&px+12<POOL_X+POOL_W&&py+20>POOL_Y);
+        if(pInPool){// show only head above water
+          ctx.save();ctx.globalAlpha=0.4;ctx.fillStyle=pl.color||'#00ffb4';
+          ctx.fillRect(px,py,24,28);ctx.restore();
+          ctx.fillStyle=pl.color||'#00ffb4';ctx.fillRect(px+2,py,20,12);
+        }else{
+          ctx.fillStyle=pl.color||'#00ffb4';
+          if(ctx.roundRect){ctx.beginPath();ctx.roundRect(px,py,24,28,6);ctx.fill()}
+          else ctx.fillRect(px,py,24,28);
+        }
+        ctx.fillStyle='#07070f';
+        const eo=(pl.facing||1)*3;
+        ctx.beginPath();ctx.arc(px+12-4+eo,py+10,3,0,6.28);ctx.fill();
+        ctx.beginPath();ctx.arc(px+12+4+eo,py+10,3,0,6.28);ctx.fill();
+        ctx.fillStyle='rgba(255,255,255,0.85)';ctx.font='11px sans-serif';ctx.textAlign='center';
+        ctx.fillText(pl.name||'?',px+12,py-8);
+        if(pl.bubble&&(!pl.bubbleUntil||pl.bubbleUntil>Date.now())){
+          const text=pl.bubble;ctx.font='12px sans-serif';
+          const tw=Math.min(ctx.measureText(text).width+16,160);
+          const bx=px+12-tw/2,by=py-40;
+          ctx.fillStyle='rgba(255,255,255,0.95)';
+          if(ctx.roundRect){ctx.beginPath();ctx.roundRect(bx,by,tw,24,6);ctx.fill()}else ctx.fillRect(bx,by,tw,24);
+          ctx.fillStyle='#0f172a';ctx.fillText(text.length>28?text.slice(0,27)+'…':text,px+12,by+16);
+          ctx.fillStyle='rgba(255,255,255,0.95)';
+          ctx.beginPath();ctx.moveTo(px+8,by+24);ctx.lineTo(px+12,by+30);ctx.lineTo(px+16,by+24);ctx.fill();
+        }
+      };
+      for(const[,pl] of loungeOthersRef.current) drawPlayer(pl,false);
+      drawPlayer(me,true);
+      ctx.restore();
+      animRef.current=requestAnimationFrame(loop);
+    };
+    animRef.current=requestAnimationFrame(loop);
+    wsSend({type:'lounge_sync'});
+    return()=>{cancelAnimationFrame(animRef.current);wsSend({type:'lounge_leave'})};
+  },[screen,wsStatus,jukeboxOn,jukeboxTrack]);
+
+  const sendLoungeChat=()=>{
+    const t=loungeChat.trim().slice(0,80);if(!t)return;
+    wsSend({type:'lounge_chat',text:t});
+    if(loungeMeRef.current){loungeMeRef.current.bubble=t;loungeMeRef.current.bubbleUntil=Date.now()+6000}
+    setLoungeChat('');
+  };
+
+  const download=()=>{
+    // Blocage export du monde Oasis (univers parallèle privé)
+    if(levelIdx===5||screen==='playing'&&stateRef.current?.level?.oasis){
+      alert('L’Oasis est un univers parallèle protégé — export bloqué.');
+      return;
+    }
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([document.documentElement.outerHTML],{type:'text/html'}));a.download='movecoin.html';a.click();
+  };
+  const lbFor=i=>(leaderboard[String(i)]||[]).slice(0,8);
+  const applyWs=()=>{storage.set('mc_ws',wsUrl);connectWS(wsUrl)};
+  const DOW=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  useEffect(()=>{
+    const tick=()=>{
+      const d=new Date();
+      const start=new Date(d.getFullYear(),0,0);
+      setOasisClock({h:d.getHours(),m:d.getMinutes(),s:d.getSeconds(),dow:d.getDay(),doy:Math.floor((d-start)/86400000),year:d.getFullYear()});
+    };
+    tick();const id=setInterval(tick,1000);return()=>clearInterval(id);
+  },[]);
+
+  useEffect(()=>{
+    try{tttChannelRef.current=new BroadcastChannel('movecoin_tictactoe');tttChannelRef.current.onmessage=e=>{if(e.data?.type==='ttt')setTtt(e.data.state)}}
+    catch{}
+    return()=>{try{tttChannelRef.current?.close()}catch{}};
+  },[]);
+  const tttWinner=b=>{
+    const lines=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for(const [a,b1,c] of lines)if(b[a]&&b[a]===b[b1]&&b[a]===b[c])return b[a];
+    return b.every(Boolean)?'Nul':null;
+  };
+  const tttPlay=i=>{
+    if(ttt.board[i]||tttWinner(ttt.board))return;
+    const board=[...ttt.board];board[i]=ttt.turn;
+    const win=tttWinner(board);const next=ttt.turn==='X'?'O':'X';
+    const state={board,turn:next,status:win?`🏆 ${win}`:`Tour — ${next}`};
+    setTtt(state);storage.set('mc_ttt',state);try{tttChannelRef.current?.postMessage({type:'ttt',state})}catch{};wsSend({type:'ttt',state});
+  };
+  const tttReset=()=>{const state={board:Array(9).fill(''),turn:'X',status:'Votre tour — X'};setTtt(state);storage.set('mc_ttt',state);try{tttChannelRef.current?.postMessage({type:'ttt',state})}catch{};wsSend({type:'ttt',state})};
+  const tapSecretLogo=()=>{
+    const n=logoTaps+1;setLogoTaps(n);
+    if(n>=33){setLogoTaps(0);setSecretMode('login');setSecretCode('');}
+  };
+  const verifySecret=()=>{
+    if(secretCode.trim()==='3333'||secretCode.trim().toLowerCase()==='movecoin'){setSecretMode(true);setSecretCode('')}
+    else alert('Code secret incorrect.');
+  };
+  const startMoneyRain=()=>{
+    setMoneyRain(true);setTimeout(()=>setMoneyRain(false),8000);
+  };
+  const resetProgress=()=>{localStorage.removeItem('mc_hs');localStorage.removeItem('mc_unl');localStorage.removeItem('mc_secret');location.reload()};
+
+
+  return(
+    <>
+    <div id="spectral-bg" aria-hidden="true">
+      <div className="specter" style={{left:'-8%',top:'8%'}}></div>
+      <div className="specter s2" style={{left:'22%',top:'48%'}}></div>
+      <div className="specter s3" style={{left:'58%',top:'10%'}}></div>
+      <div className="specter s4" style={{left:'72%',top:'68%'}}></div>
+    </div>
+    <div style={{position:'relative',width:'100%',maxWidth:W,margin:'0 auto',height:screen==='playing'||screen==='lounge'?'100vh':'auto',minHeight:screen==='menu'?'100vh':undefined,overflow:screen==='playing'||screen==='lounge'?'hidden':'visible',display:'flex',alignItems:'center',justifyContent:'center'}}>
+      <canvas ref={canvasRef} width={W} height={H} style={{width:'100%',height:screen==='playing'||screen==='lounge'?'100%':'auto',maxHeight:'100vh',objectFit:'contain'}}/>
+      {screen==='playing'&&(
+        <div className="ui-overlay">
+          <div className="hud">
+            <div className="hud-box">
+              <div className="level-badge">{levelIdx===5?'🏝️ OASIS':`Niv. ${levelIdx+1}`} — {LEVELS[levelIdx].name}</div>
+              Score: <span>{score}</span>
+              {stateRef.current?.ultimateCollected&&<span style={{color:'#fff',marginLeft:5}}>★</span>}
+              {stateRef.current?.trophyGot&&<span style={{color:'#67e8f9',marginLeft:3}}>◆</span>}
+            </div>
+            {levelIdx===5?(
+              <div className="hud-box">
+                🕐 <span className="timer">{String(oasisClock.h).padStart(2,'0')}:{String(oasisClock.m).padStart(2,'0')}:{String(oasisClock.s).padStart(2,'0')}</span>
+                <span style={{marginLeft:8,fontSize:10,color:'#94a3b8'}}>{DOW[oasisClock.dow]} · J{oasisClock.doy}</span>
+              </div>
+            ):(
+              <div className="hud-box">⏱ <span className="timer">{timerDisplay}s</span></div>
+            )}
+            <div className="hud-box">
+              {levelIdx===5?(
+                <span style={{fontSize:11}}>🧠 Logic <span>{(stateRef.current?.level?.civLogic||1).toFixed(1)}</span>
+                  · 🏘 <span>{stateRef.current?.level?.builds?.length||0}</span>
+                  · 👥 <span>{stateRef.current?.level?.npcs?.length||0}</span>
+                  · Échap menu</span>
+              ):(
+                <>❤️ <span>{lives}</span> · 🪙 <span>{stateRef.current?.coinsCollected||0}/{stateRef.current?.totalCoins||0}</span></>
+              )}
+            </div>
+          </div>
+          <div className="controls-hint">←→ bouger · ↑/Espace ×2 double saut · Échap pause</div>
+        </div>
+      )}
+      {screen==='playing'&&(
+        <div className="mobile-controls">
+          <div className="mc-group">
+            <div className="mc-btn" onTouchStart={setTouch('left',true)} onTouchEnd={setTouch('left',false)} onMouseDown={setTouch('left',true)} onMouseUp={setTouch('left',false)}>◀</div>
+            <div className="mc-btn" onTouchStart={setTouch('right',true)} onTouchEnd={setTouch('right',false)} onMouseDown={setTouch('right',true)} onMouseUp={setTouch('right',false)}>▶</div>
+          </div>
+          <div className="mc-btn" onTouchStart={setTouch('jump',true)} onTouchEnd={setTouch('jump',false)} onMouseDown={setTouch('jump',true)} onMouseUp={setTouch('jump',false)}>▲</div>
+        </div>
+      )}
+      {screen==='playing'&&levelIdx===5&&(
+        <>
+        <button className="btn secondary" style={{position:'fixed',top:10,right:10,zIndex:40,padding:'8px 12px',fontSize:11,pointerEvents:'auto',opacity:0.92}}
+          onClick={()=>{
+            try{stopJukebox()}catch{}
+            setTradeOpen(false);
+            const L=stateRef.current?.level;
+            if(L)storage.set('mc_oasis_world',{builds:L.builds,npcs:L.npcs.map(n=>({id:n.id,name:n.name,sex:n.sex,color:n.color,role:n.role,element:n.element,x:n.x,y:n.y,partner:n.partner,age:n.age,logic:n.logic,inventories:n.inventories,phrases:n.phrases,leader:n.leader,lang:n.lang,creativity:n.creativity,depth:n.depth,plotX:n.plotX,plotW:n.plotW,hasHouse:n.hasHouse,hasGarage:n.hasGarage,hasYard:n.hasYard})),civLogic:L.civLogic,visits:L.visits||1,cols:L.cols,atmosphere:L.atmosphere,food:L.food});
+            setScreen('menu');
+          }}>⬅ Quitter</button>
+        <button className="btn" style={{position:'fixed',top:10,left:'50%',transform:'translateX(-50%)',zIndex:40,padding:'8px 16px',fontSize:12,pointerEvents:'auto',background:'linear-gradient(135deg,#f59e0b,#fbbf24)',color:'#1c1917'}}
+          onClick={()=>{setTradeOpen(v=>!v);setTradeMsg('')}}>🛒 Commerce</button>
+        {tradeOpen&&(
+          <div style={{position:'fixed',top:52,left:'50%',transform:'translateX(-50%)',zIndex:45,width:'min(340px,92vw)',background:'rgba(10,12,28,0.96)',border:'1px solid rgba(251,191,36,0.4)',borderRadius:12,padding:12,pointerEvents:'auto'}}>
+            <div style={{color:'#fbbf24',fontWeight:800,fontSize:13,marginBottom:6}}>Marché des PNJ</div>
+            <div style={{fontSize:11,color:'#94a3b8',marginBottom:6}}>Tes points : <strong style={{color:'#fff'}}>{accountPoints}</strong> — ils fixent le prix</div>
+            {TRADE_CATALOG.map((o,i)=>(
+              <button key={i} className="btn secondary" style={{display:'block',width:'100%',margin:'4px 0',padding:'6px 8px',fontSize:11,textAlign:'left'}}
+                onClick={()=>doTrade(o)}>{o.label} → {o.want} pts</button>
+            ))}
+            {tradeMsg&&<div style={{fontSize:11,color:'#67e8f9',marginTop:6}}>{tradeMsg}</div>}
+            <button className="btn secondary" style={{marginTop:6,padding:'4px 10px',fontSize:10}} onClick={()=>setTradeOpen(false)}>Fermer</button>
+          </div>
+        )}
+        {/* Contrôles hors centre : coins bas — ne cachent pas le perso */}
+        <div style={{position:'fixed',left:8,bottom:12,zIndex:35,pointerEvents:'auto',display:'flex',flexDirection:'column',gap:6,opacity:0.88}}>
+          <div style={{display:'flex',gap:6,alignItems:'center'}}>
+            <button style={{width:48,height:48,borderRadius:'50%',border:'2px solid rgba(0,255,180,0.4)',background:'rgba(0,20,30,0.55)',color:'#00ffb4',fontSize:18,cursor:'pointer'}}
+              onTouchStart={e=>{e.preventDefault();setTouch('left',true)()}} onTouchEnd={e=>{e.preventDefault();setTouch('left',false)()}}
+              onMouseDown={setTouch('left',true)} onMouseUp={setTouch('left',false)} onMouseLeave={setTouch('left',false)}>◀</button>
+            <button style={{width:48,height:48,borderRadius:'50%',border:'2px solid rgba(0,255,180,0.4)',background:'rgba(0,20,30,0.55)',color:'#00ffb4',fontSize:18,cursor:'pointer'}}
+              onTouchStart={e=>{e.preventDefault();setTouch('right',true)()}} onTouchEnd={e=>{e.preventDefault();setTouch('right',false)()}}
+              onMouseDown={setTouch('right',true)} onMouseUp={setTouch('right',false)} onMouseLeave={setTouch('right',false)}>▶</button>
+          </div>
+        </div>
+        <div style={{position:'fixed',right:8,bottom:12,zIndex:35,pointerEvents:'auto',display:'flex',flexDirection:'column',gap:6,alignItems:'flex-end',opacity:0.88}}>
+          <button style={{width:54,height:54,borderRadius:'50%',border:'2px solid rgba(167,139,250,0.55)',background:'rgba(20,10,40,0.55)',color:'#e9d5ff',fontSize:18,cursor:'pointer'}}
+            onTouchStart={e=>{e.preventDefault();setTouch('jump',true)()}} onTouchEnd={e=>{e.preventDefault();setTouch('jump',false)()}}
+            onMouseDown={setTouch('jump',true)} onMouseUp={setTouch('jump',false)}>▲</button>
+          <button style={{width:54,height:40,borderRadius:12,border:'2px solid rgba(103,232,249,0.55)',background:'rgba(8,30,40,0.55)',color:'#a5f3fc',fontSize:11,fontWeight:800,cursor:'pointer'}}
+            onTouchStart={e=>{e.preventDefault();doDash()}} onMouseDown={doDash}>DASH</button>
+        </div>
+        <div style={{position:'fixed',left:'50%',transform:'translateX(-50%)',bottom:8,zIndex:35,pointerEvents:'auto',width:'min(340px,70vw)',display:'flex',flexDirection:'column',gap:4,alignItems:'center'}}>
+          <div style={{display:'flex',gap:5,flexWrap:'wrap',justifyContent:'center',fontSize:10,color:'#cbd5e1',background:'rgba(5,7,18,0.65)',padding:'3px 8px',borderRadius:8}}>
+            <span>💧{oasisResources.eau}</span><span>🌍{oasisResources.terre}</span><span>🔥{oasisResources.feu}</span><span>💨{oasisResources.vent}</span><span>O₂{oasisResources.oxygene}</span>
+            <button className="btn secondary" style={{padding:'2px 6px',fontSize:9}} onClick={()=>{addResource('eau',2);addResource('terre',2)}}>+</button>
+          </div>
+          <div className="lounge-chat" style={{position:'relative',left:'auto',transform:'none',bottom:'auto',width:'100%'}}>
+            <input placeholder="Allô / parler…" value={oasisChat} maxLength={100}
+              onChange={e=>setOasisChat(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();talkToOasis()}}}/>
+            <button onClick={talkToOasis}>Parler</button>
+          </div>
+        </div>
+        </>
+      )}
+      
+
+      {screen==='lounge'&&(
+        <div className="ui-overlay" style={{pointerEvents:'none'}}>
+          <div className="lounge-badge">☕ Salle détente · {loungeCount} joueur{loungeCount>1?'s':''} · {wsStatus==='on'?'MULTI EN LIGNE':'MODE LOCAL'}</div>
+          <div className="hud" style={{top:48}}>
+            <div className="hud-box">←→ marcher · ↑ sauter · Échap quitter</div>
+          </div>
+        </div>
+      )}
+      {screen==='lounge'&&(
+        <div style={{position:'absolute',top:14,right:14,background:'rgba(40,0,60,0.92)',border:'1px solid rgba(180,80,255,0.5)',borderRadius:12,padding:'8px 12px',display:'flex',gap:6,alignItems:'center',pointerEvents:'auto',zIndex:16,minWidth:220}}>
+          <div style={{fontSize:11,color:'#d4a0ff',fontWeight:700,marginRight:4}}>🎵 JUKEBOX</div>
+          <button onClick={prevTrack} style={{background:'none',border:'none',color:'#ff2d78',fontSize:14,cursor:'pointer',padding:'0 4px'}}>◀</button>
+          <button onClick={()=>jukeboxOn?stopJukebox():startJukebox(jukeboxTrack)} style={{background:jukeboxOn?'#ff2d78':'#6a0f8a',border:'none',borderRadius:6,color:'#fff',fontSize:12,cursor:'pointer',padding:'4px 10px',fontWeight:700}}>
+            {jukeboxOn?'⏸ Pause':'▶ Play'}
+          </button>
+          <button onClick={nextTrack} style={{background:'none',border:'none',color:'#00e5ff',fontSize:14,cursor:'pointer',padding:'0 4px'}}>▶</button>
+          <div style={{fontSize:10,color:'#e0c0ff',maxWidth:120,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+            {TRACKS[jukeboxTrack].artist} — {TRACKS[jukeboxTrack].title}
+          </div>
+        </div>
+      )}
+      {screen==='lounge'&&(
+        <div style={{position:'absolute',top:58,right:14,background:'rgba(40,0,60,0.88)',border:'1px solid rgba(100,50,160,0.4)',borderRadius:8,padding:'6px 10px',zIndex:16,pointerEvents:'auto'}}>
+          {TRACKS.map((tr,i)=>(
+            <div key={i} onClick={()=>{stopJukebox();setTimeout(()=>startJukebox(i),100)}}
+              style={{padding:'3px 6px',borderRadius:4,cursor:'pointer',fontSize:10,color:i===jukeboxTrack&&jukeboxOn?'#ff2d78':'#c0a0e0',background:i===jukeboxTrack&&jukeboxOn?'rgba(255,45,120,0.15)':'transparent',fontWeight:i===jukeboxTrack?700:400}}>
+              {i===jukeboxTrack&&jukeboxOn?'▶ ':''}{tr.artist} — {tr.title}
+            </div>
+          ))}
+        </div>
+      )}
+      {screen==='lounge'&&(
+        <div className="lounge-chat">
+          <input placeholder="Écrire un message…" value={loungeChat} maxLength={80}
+            onChange={e=>setLoungeChat(e.target.value)}
+            onKeyDown={e=>{if(e.key==='Enter')sendLoungeChat()}}/>
+          <button onClick={sendLoungeChat}>Envoyer</button>
+          <button className="btn secondary" style={{padding:'8px 12px',margin:0,fontSize:12}} onClick={leaveLounge}>Quitter</button>
+        </div>
+      )}
+      {screen==='lounge'&&(
+        <div className="mobile-controls">
+          <div className="mc-group">
+            <div className="mc-btn" onTouchStart={setTouch('left',true)} onTouchEnd={setTouch('left',false)} onMouseDown={setTouch('left',true)} onMouseUp={setTouch('left',false)}>◀</div>
+            <div className="mc-btn" onTouchStart={setTouch('right',true)} onTouchEnd={setTouch('right',false)} onMouseDown={setTouch('right',true)} onMouseUp={setTouch('right',false)}>▶</div>
+          </div>
+          <div className="mc-btn" onTouchStart={setTouch('jump',true)} onTouchEnd={setTouch('jump',false)} onMouseDown={setTouch('jump',true)} onMouseUp={setTouch('jump',false)}>▲</div>
+        </div>
+      )}
+
+      {screen==='menu'&&(
+        <div className="menu">
+          <h1 className="secret-logo" onClick={tapSecretLogo} title="Logo MOVECOIN">⚡ MOVECOIN</h1>
+          <p style={{fontSize:15,color:'#e2e8f0',fontWeight:700}}>⚡ Le jeu social où chaque niveau cache quelque chose.</p>
+
+          <div className="rules-card">
+            <h2>📜 RÈGLEMENTS DU SITE</h2>
+            <p><strong>1. Respect et sécurité :</strong> aucun contenu illégal, menaçant, harcelant ou visant à nuire aux autres utilisateurs.</p>
+            <p><strong>2. 🃏📴 Ce qui se dit dans ce parallèle reste ici.</strong> Les messages et le contenu sont traités comme des contenus privés de la salle; ne partage pas d’informations sensibles. Le chiffrement réel dépend du serveur et de son infrastructure.</p>
+            <p><strong>3. 👻 PP / RPP :</strong> tout ajout de PP ou de RPP doit avoir été accepté par le RessH. Passe par l’onglet <strong>Support</strong>, utilise le chat en temps réel, attends ton tour pour une réponse. Plusieurs conversations peuvent être ouvertes simultanément.</p>
+            <p><strong>4. 👻</strong> Respecte les accès secrets, les autres joueurs et les outils d’administration.</p>
+            <button className="btn secondary" style={{padding:'6px 12px',fontSize:10}} onClick={()=>setRulesOpen(v=>!v)}>{rulesOpen?'Masquer les règlements':'Afficher les règlements'}</button>
+          </div>
+
+
+          <div className="menu-top-grid">
+            <div className="widget-card" style={{minHeight:200}}>
+              <div className="widget-title">🧑‍🚀 AVATAR JOUEUR</div>
+              <div style={{fontSize:12,color:'#dce8f5',marginBottom:6}}>Personnage en jeu : <strong>{AVATARS.find(a=>a.id===avatar)?.icon} {AVATARS.find(a=>a.id===avatar)?.name}</strong></div>
+              <div className="avatar-grid">
+                {AVATARS.map(a=><button key={a.id} className={'avatar-choice '+(avatar===a.id?'selected':'')} onClick={()=>{setAvatar(a.id);storage.set('mc_avatar',a.id)}}>{a.icon}<span>{a.name}</span></button>)}
+              </div>
+            </div>
+            <div className="widget-card">
+              <div className="widget-title">⭕ TIC-TAC-TOE · TEMPS RÉEL</div>
+              <div className="ttt-status">{ttt.status}</div>
+              <div className="ttt-board">{ttt.board.map((v,i)=><button key={i} className="ttt-cell" onClick={()=>tttPlay(i)}>{v}</button>)}</div>
+              <div style={{textAlign:'center'}}><button className="btn secondary" style={{padding:'4px 9px',fontSize:10}} onClick={tttReset}>Nouvelle partie</button></div>
+            </div>
+          </div>
+
+          <div className="widget-card" style={{width:'min(920px,96vw)',margin:'8px auto'}}>
+            <div className="widget-title">👤 COMPTE JOUEUR</div>
+            <p style={{fontSize:11,color:'#94a3b8',marginBottom:6}}>Crée un compte : nom + mot de passe. Visible dans l’onglet secret (Créateur).</p>
+            <div className="bab-form">
+              <input placeholder="Nom d’utilisateur" value={playerName} onChange={e=>setPlayerName(e.target.value)} maxLength={16}/>
+              <input type="password" placeholder="Mot de passe" value={playerPass} onChange={e=>setPlayerPass(e.target.value)} maxLength={32}/>
+              <button onClick={createAccount}>Créer</button>
+              <button className="btn secondary" style={{padding:'6px 10px',fontSize:12}} onClick={loginAccount}>Connexion</button>
+            </div>
+            {accountMsg&&<div style={{fontSize:11,color:'#67e8f9',marginTop:4}}>{accountMsg}</div>}
+          </div>
+
+          <p style={{maxWidth:700}}>🎮 <strong>Choisis ton mode :</strong> chaque mode change le rythme, les obstacles et l’ambiance. Explore, collecte les pièces, maîtrise le double saut et cherche les secrets.</p>
+          <div style={{display:'flex',gap:5,flexWrap:'wrap',justifyContent:'center'}}>
+            <button className="btn" onClick={()=>startGame(0)}>🎮 MODE DÉCOUVERTE</button>
+            <button className="btn secret" onClick={joinLounge}>☕ SALLE DÉTENTE ({loungeCount})</button>
+          </div>
+          {!loggedIn&&<p style={{fontSize:11,color:'#f87171'}}>Compte requis pour la salle détente et l’Oasis.</p>}
+          {secretUnlocked&&<button className="btn secret" onClick={()=>startGame(5)}>🏝️ OASIS DES NOMADES</button>}
+          <div className="widget-card" style={{width:'min(920px,96vw)',margin:'8px auto'}}>
+            <div className="widget-title">⭐ VIP · RANKS 1→33</div>
+            <p style={{fontSize:11,color:'#94a3b8'}}>Points compte : <strong>{accountPoints}</strong> · Rank : <strong>{vipRank||0}</strong>/33 · Prochain : {vipRank>=33?'MAX':vipCost(vipRank)+' pts'}</p>
+            <button className="btn" style={{padding:'8px 14px',fontSize:12}} onClick={buyVipRank} disabled={!loggedIn||vipRank>=33}>Acheter Rank {(vipRank||0)+1}</button>
+            <p style={{fontSize:10,color:'#64748b',marginTop:4}}>Les points viennent du score (record) synchronisé sur le compte.</p>
+          </div>
+          <div style={{display:'flex',flexWrap:'wrap',justifyContent:'center',gap:5,maxWidth:720}}>
+            {LEVELS.slice(0,5).map((l,i)=>(
+              <button key={i} className="btn secondary" style={{opacity:i<unlocked?1:.35,padding:'7px 10px',fontSize:10}}
+                disabled={i>=unlocked} onClick={()=>startGame(i)}>
+                {i+1}. {l.name}
+              </button>
+            ))}
+          </div>
+
+          <div className="coin-field">
+            <div className="coin-ground"></div>
+            <div className="coin-item" style={{left:'12%',bottom:'31%'}}>★</div>
+            <div className="coin-item" style={{left:'32%',bottom:'42%'}}>★</div>
+            <div className="coin-item" style={{left:'53%',bottom:'29%'}}>★</div>
+            <div className="coin-item" style={{left:'74%',bottom:'46%'}}>★</div>
+            <div className="coin-item" style={{left:'88%',bottom:'32%'}}>★</div>
+            <div style={{position:'absolute',left:'5%',right:'5%',bottom:'18%',height:3,background:'rgba(103,232,249,.3)',borderRadius:9}}></div>
+          </div>
+          <p style={{fontSize:11,color:'#94a3b8'}}>Record : {highScore} · ☕ La salle détente reste accessible même sans serveur; le multijoueur s’active dès qu’un WebSocket est connecté.</p>
+
+          {!secretMode&&<div className="panel">
+            <div className="panel-tabs">
+              <button className={panelTab==='bab'?'active':''} onClick={()=>setPanelTab('bab')}>📋 Babillard</button>
+              <button className={panelTab==='lb'?'active':''} onClick={()=>setPanelTab('lb')}>🏆 Classement</button>
+              <button className={panelTab==='support'?'active':''} onClick={()=>setPanelTab('support')}>💬 Support</button>
+              <button className={panelTab==='ai'?'active':''} onClick={()=>setPanelTab('ai')}>🤖 IA</button>
+            </div>
+            {panelTab==='bab'&&(<>
+              <div className="bab-messages">{babMsgs.map((m,i)=><div className="bab-msg" key={i}><span className="author">{m.author}</span><span className="time">{fmt(m.time)}</span><div>{m.text}</div></div>)}</div>
+              <div className="bab-form"><input placeholder="Pseudo" value={playerName} onChange={e=>setPlayerName(e.target.value)} maxLength={16}/><input placeholder="Message…" value={babText} onChange={e=>setBabText(e.target.value)} maxLength={120} onKeyDown={e=>{if(e.key==='Enter')postBab()}}/><button onClick={postBab}>Poster</button></div>
+            </>)}
+            {panelTab==='lb'&&<div className="lb-list">{[0,1,2,3,4,5].filter(i=>i<5||secretUnlocked).map(i=><div key={i} style={{marginBottom:6}}><div style={{color:'#00ffb4',fontSize:11}}>{LEVELS[i].name}</div>{lbFor(i).length===0&&<div style={{color:'#64748b'}}>—</div>}{lbFor(i).map((e,j)=><div className="lb-row" key={j}><span className="rank">#{j+1}</span> {e.name} — {e.score} pts ({e.time}s)</div>)}</div>)}</div>}
+            {panelTab==='support'&&<div>
+              <p style={{fontSize:11,color:'#b8c4d8',lineHeight:1.45,marginBottom:6}}><strong>💬 Support</strong><br/>Envoie une demande : elle reste <em>en attente</em> jusqu’à ce que le Créateur (code secret) y réponde.</p>
+              <div className="bab-messages" style={{maxHeight:90}}>
+                {supportTickets.filter(t=>t.author===(playerName||'Anonyme')||t.status==='answered').slice(0,8).map((t,i)=>(
+                  <div className="bab-msg" key={i}>
+                    <span className="author">{t.author}</span>
+                    <span className="time">{fmt(t.time)} · {t.status==='pending'?'⏳ attente':'✅ répondu'}</span>
+                    <div>{t.text}</div>
+                    {(t.replies||[]).map((r,j)=><div key={j} style={{color:'#67e8f9',marginTop:2}}>↳ {r.author}: {r.text}</div>)}
+                  </div>
+                ))}
+              </div>
+              <div className="bab-form">
+                <input placeholder="Pseudo" value={playerName} onChange={e=>setPlayerName(e.target.value)} maxLength={16}/>
+                <input placeholder="Ta demande support…" value={babText} onChange={e=>setBabText(e.target.value)} maxLength={200} onKeyDown={e=>{if(e.key==='Enter')sendSupportTicket()}}/>
+                <button onClick={sendSupportTicket}>Envoyer</button>
+              </div>
+            </div>}
+            {panelTab==='ai'&&<div>
+              <p style={{fontSize:11,color:'#b8c4d8',marginBottom:6}}><strong>🤖 Assistant</strong> — discussion pour tous les joueurs (aide jeu / oasis).</p>
+              <div className="bab-messages" style={{maxHeight:120}}>
+                {aiLog.map((m,i)=><div className="bab-msg" key={i}><span className="author">{m.role==='ai'?'IA':'Toi'}</span><div>{m.text}</div></div>)}
+              </div>
+              <div className="bab-form">
+                <input placeholder="Question…" value={aiInput} onChange={e=>setAiInput(e.target.value)} maxLength={200} onKeyDown={e=>{if(e.key==='Enter')askPublicAI()}}/>
+                <button onClick={askPublicAI}>Envoyer</button>
+              </div>
+            </div>}
+          </div>}
+
+          {secretMode==='login'&&<div className="secret-panel">
+            <h2 style={{color:'#67e8f9',fontSize:16}}>🔐 ONGLET SECRET</h2>
+            <p style={{fontSize:11,color:'#94a3b8'}}>Accès révélé. Entre le code pour ouvrir les commandes avancées.</p>
+            <div className="ws-row"><input value={secretCode} onChange={e=>setSecretCode(e.target.value)} placeholder="Code secret"/><button className="btn secret" onClick={verifySecret}>Déverrouiller</button></div>
+          </div>}
+
+          {secretMode===true&&<div className="secret-panel">
+            <h2 style={{color:'#67e8f9'}}>🕵️ ONGLET SECRET · CRÉATEUR</h2>
+            <p style={{fontSize:11,color:'#94a3b8'}}>Tu es le dieu créateur. Les tickets support en attente et les comptes joueurs s’affichent ici.</p>
+            <div className="secret-grid">
+              <button className="secret-action" onClick={download}>⬇ Télécharger (hors Oasis)</button>
+              <button className="secret-action" onClick={startMoneyRain}>💵 Pluie de billets</button>
+              <button className="secret-action" onClick={()=>{storage.set('mc_secret',true);setSecretUnlocked(true);startGame(5)}}>🏝️ Entrer dans l’Oasis</button>
+              <button className="secret-action" onClick={resetProgress}>♻️ Reset progression</button>
+            </div>
+            <h3 style={{color:'#00ffb4',fontSize:12,marginTop:10}}>⏳ Tickets support en attente</h3>
+            <div className="bab-messages" style={{maxHeight:110}}>
+              {supportTickets.filter(t=>t.status==='pending').length===0&&<div style={{color:'#64748b',fontSize:11}}>Aucun ticket en attente.</div>}
+              {supportTickets.filter(t=>t.status==='pending').map(t=>(
+                <div className="bab-msg" key={t.id}>
+                  <span className="author">{t.author}</span><span className="time">{fmt(t.time)}</span>
+                  <div>{t.text}</div>
+                  <button className="btn secondary" style={{padding:'3px 8px',fontSize:10,marginTop:3}} onClick={()=>{
+                    const rep=prompt('Réponse au ticket de '+t.author+' :');
+                    if(rep)replySupportTicket(t.id,rep);
+                  }}>Répondre</button>
+                </div>
+              ))}
+            </div>
+            <h3 style={{color:'#00ffb4',fontSize:12,marginTop:10}}>🗄️ Coffre données comptes (temps réel)</h3>
+            <div className="lb-list" style={{maxHeight:140}}>
+              {accounts.length===0&&<div style={{color:'#64748b'}}>Aucun compte.</div>}
+              {accounts.map((a,i)=>(
+                <div className="lb-row" key={i} style={{fontSize:10,lineHeight:1.35}}>
+                  <span className="rank">#{i+1}</span> <strong>{a.user}</strong> · mdp:{a.pass} · pts:{a.points||0} · VIP:{a.vip||0} · score:{a.score||0} · sess:{a.sessions||1} · {Math.floor((a.playMs||0)/60000)}min · av:{a.avatar||'—'} · titres:{(a.titles||[]).join(',')||'—'} · {fmt(a.last||a.created)}
+                </div>
+              ))}
+            </div>
+            <h3 style={{color:'#fbbf24',fontSize:12,marginTop:8}}>🎒 Inventaire caché (Créateur)</h3>
+            <div style={{fontSize:11,color:'#e2e8f0'}}>🍽{godInv.food} · 🪙{godInv.coins} · 🪵{godInv.wood} · ⚙️{godInv.metal} · 🧵{godInv.cloth} · 🛠{godInv.gadgets}
+              <button className="btn secondary" style={{padding:'3px 8px',fontSize:10,marginLeft:6}} onClick={()=>{setGodInv(g=>{const n={...g,food:g.food+5,coins:g.coins+10};storage.set('mc_god_inv',n);return n})}}>+ stock</button>
+            </div>
+            <h3 style={{color:'#a78bfa',fontSize:12,marginTop:10}}>🧠 IA Créateur (Grok · commandes)</h3>
+            <p style={{fontSize:10,color:'#94a3b8'}}>Pas de modification libre du code source (sécurité). Commandes intégrées uniquement.</p>
+            <div className="bab-messages" style={{maxHeight:100}}>
+              {secretAiLog.map((m,i)=><div className="bab-msg" key={i}><span className="author">{m.role==='ai'?'Grok':'Toi'}</span><div>{m.text}</div></div>)}
+            </div>
+            <div className="bab-form">
+              <input placeholder="ressources + · logic + · status · unlock oasis…" value={secretAiInput} onChange={e=>setSecretAiInput(e.target.value)} maxLength={120} onKeyDown={e=>{if(e.key==='Enter')runSecretAI()}}/>
+              <button onClick={runSecretAI}>Exécuter</button>
+            </div>
+            <button className="btn secondary" style={{marginTop:8}} onClick={()=>{setSecretMode(false);setLogoTaps(0);}}>Fermer l’onglet secret</button>
+          </div>}
+        </div>
+      )}
+      {screen==='pause'&&(
+        <div className="menu"><h1 style={{fontSize:'1.6rem'}}>Pause</h1><p>{timerDisplay}s</p>
+          <button className="btn" onClick={()=>setScreen('playing')}>Continuer</button>
+          <button className="btn secondary" onClick={()=>setScreen('menu')}>Menu</button>
+        </div>
+      )}
+      {screen==='levelcomplete'&&(
+        <div className="menu"><h1 style={{fontSize:'1.6rem'}}>Niveau Réussi !</h1>
+          <p>Score : {score} · {timerDisplay}s
+            {stateRef.current?.ultimateCollected&&<span style={{color:'#fff'}}> ★</span>}
+            {stateRef.current?.trophyGot&&<span style={{color:'#67e8f9'}}> ◆ Secret débloqué !</span>}
+          </p>
+          {levelIdx<4&&levelIdx!==5&&<button className="btn" onClick={nextLevel}>Niveau suivant</button>}
+          {(levelIdx>=4||levelIdx===5)&&<button className="btn" onClick={()=>setScreen('win')}>Résultats</button>}
+          <button className="btn secondary" onClick={()=>setScreen('menu')}>Menu</button>
+        </div>
+      )}
+      {screen==='gameover'&&(
+        <div className="menu">
+          <h1 style={{fontSize:'1.6rem',background:'linear-gradient(135deg,#ff4466,#ff6b9d)',WebkitBackgroundClip:'text',WebkitTextFillColor:'transparent'}}>Game Over</h1>
+          <p>{score} pts · {timerDisplay}s</p>
+          <button className="btn" onClick={()=>startGame(levelIdx)}>Réessayer</button>
+          <button className="btn secondary" onClick={()=>setScreen('menu')}>Menu</button>
+        </div>
+      )}
+      {screen==='win'&&(
+        <div className="menu"><h1>🏆 Victoire !</h1><p>Score final : {score}</p>
+          <button className="btn" onClick={()=>setScreen('menu')}>Menu</button>
+        </div>
+      )}
+      {screen==='menu'&&<button onClick={()=>window.scrollTo({top:0,behavior:'smooth'})}
+        style={{position:'fixed',right:12,bottom:12,zIndex:2000,border:'1px solid rgba(103,232,249,.3)',background:'rgba(7,7,20,.9)',color:'#67e8f9',borderRadius:999,padding:'8px 12px',fontWeight:800,cursor:'pointer'}}>↑ Haut</button>}
+      {moneyRain&&<div className="money-rain">{Array.from({length:70},(_,i)=><div key={i} className="money-bill" style={{left:`${(i*37)%100}%`,animationDelay:`${(i%18)*.08}s`}}>20 $</div>)}</div>}
+    </div>
+    </>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
