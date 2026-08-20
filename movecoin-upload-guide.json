@@ -1,0 +1,35 @@
+{
+  "repo": "https://github.com/NWJack/MoveCoinP",
+  "branch": "main",
+  "commit_message": "MOVECOIN v4 — Oasis PNJ, avatars Musclé & Pretty, deploy Render",
+  "files": [
+    {
+      "path": "package.json",
+      "content": "{\n  \"name\": \"movecoin\",\n  \"version\": \"4.0.0\",\n  \"description\": \"MOVECOIN — plateforme 2D + Oasis PNJ autonome\",\n  \"private\": true,\n  \"scripts\": {\n    \"start\": \"npx serve -s . -l $PORT\",\n    \"build\": \"echo 'Static site — no build step'\"\n  },\n  \"engines\": {\n    \"node\": \">=18\"\n  }\n}\n"
+    },
+    {
+      "path": "render.yaml",
+      "content": "services:\n  - type: web\n    name: movecoin\n    runtime: static\n    buildCommand: \"echo static\"\n    staticPublishPath: .\n    routes:\n      - type: rewrite\n        source: /*\n        destination: /index.html\n"
+    },
+    {
+      "path": "README.md",
+      "content": "# MOVECOIN\n\nJeu plateforme 2D (React + Canvas) avec **Oasis** : monde parallèle, PNJ autonomes, commerce, VIP, comptes joueurs.\n\nFichier unique : `index.html` (tout est inclus — pas de build complexe).\n\n## Avatars\n\n- Spectre, Robot, Ninja, Alien, Chat, Crâne, Mage, Cosmonaute\n- **Musclé** 💪 — avatar mâle torse large\n- **Pretty** 💋 — avatar femme, visage soft, grosses lèvres\n\n## Lancer en local\n\nOuvre simplement `index.html` dans un navigateur, **ou** :\n\n```bash\nnpx serve .\n```\n\n## GitHub\n\n```bash\ncd movecoin-deploy\ngit init\ngit add .\ngit commit -m \"MOVECOIN v4 — Oasis + avatars\"\ngit branch -M main\ngit remote add origin https://github.com/TON_USER/movecoin.git\ngit push -u origin main\n```\n\n## Render\n\n### Option A — Static Site (recommandé)\n\n1. [render.com](https://render.com) → **New +** → **Static Site**\n2. Connecte le repo GitHub\n3. Réglages :\n   - **Build Command** : laisse vide ou `echo static`\n   - **Publish Directory** : `.` (racine)\n4. Deploy\n\n### Option B — Blueprint\n\nSi le repo contient `render.yaml` :\n\n1. **New +** → **Blueprint**\n2. Sélectionne le repo\n3. Render lit `render.yaml` et déploie\n\n### Option C — Web Service Node\n\n1. **New +** → **Web Service**\n2. Runtime : Node\n3. Build : _(vide)_\n4. Start : `npx serve -s . -l $PORT`\n5. Deploy\n\n## Comptes & données\n\n- Comptes, scores, oasis : **localStorage** du navigateur\n- Mode secret (33 clics silencieux sur le logo) : coffre admin\n- Salle détente / Oasis : **compte requis**\n\n## Structure\n\n```\nmovecoin-deploy/\n├── index.html      # jeu complet\n├── package.json    # scripts optionnels\n├── render.yaml     # blueprint Render\n├── README.md\n└── .gitignore\n```\n"
+    },
+    {
+      "path": ".gitignore",
+      "content": "node_modules/\n.DS_Store\n*.log\n.env\n.idea/\n.vscode/\ndist/\nbuild/\n"
+    },
+    {
+      "path": "index.html",
+      "note": "Voir fichier séparé index.html (trop volumineux pour coller)",
+      "local": "movecoin-deploy/index.html"
+    }
+  ],
+  "instructions_fr": [
+    "1. Va sur https://github.com/NWJack/MoveCoinP",
+    "2. Add file → Upload files",
+    "3. Glisse tout le contenu du dossier movecoin-deploy/",
+    "4. Commit message: MOVECOIN v4",
+    "OU en terminal: cd movecoin-deploy && git init && git add . && git commit -m 'MOVECOIN v4' && git branch -M main && git remote add origin https://github.com/NWJack/MoveCoinP.git && git push -u origin main"
+  ]
+}
